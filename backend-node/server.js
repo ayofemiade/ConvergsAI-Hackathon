@@ -43,7 +43,7 @@ const PORT = process.env.PORT || 4000;
 const PYTHON_AI_URL = process.env.PYTHON_AI_URL || 'http://localhost:8000';
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'https://ai-sales-agent-theta.vercel.app'];
+  : ['http://localhost:3000', 'https://convergsai.vercel.app'];
 
 // Security Middleware
 app.use(helmet({
