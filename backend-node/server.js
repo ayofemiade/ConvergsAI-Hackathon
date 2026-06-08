@@ -18,6 +18,19 @@ const morgan = require('morgan');
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const { AccessToken } = require('livekit-server-sdk');
+const { supabase, getSupabaseClient } = require('./supabaseClient');
+
+// Helper to get authenticated user ID from Bearer Token
+const getUserId = async (req) => {
+  try {
+    const db = getSupabaseClient(req);
+    const { data: { user }, error } = await db.auth.getUser();
+    if (error) return null;
+    return user ? user.id : null;
+  } catch (e) {
+    return null;
+  }
+};
 
 // Initialize Express app
 const app = express();
@@ -309,6 +322,416 @@ app.post('/api/livekit/token', async (req, res) => {
       error: 'Failed to generate token',
       message: error.message
     });
+  }
+});
+
+// --- Supabase DB Endpoints ---
+
+// Get all leads
+app.get('/api/leads', async (req, res) => {
+  try {
+    const db = getSupabaseClient(req);
+    const { data, error } = await db
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json({ success: true, leads: data });
+  } catch (error) {
+    console.error('Error fetching leads:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to fetch leads', message: error.message });
+  }
+});
+
+// Get a single lead
+app.get('/api/leads/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = getSupabaseClient(req);
+    const { data, error } = await db
+      .from('leads')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, lead: data });
+  } catch (error) {
+    console.error('Error fetching lead:', error.message);
+    res.status(error.code === 'PGRST116' ? 404 : 500).json({
+      success: false,
+      error: error.code === 'PGRST116' ? 'Lead not found' : 'Failed to fetch lead',
+      message: error.message
+    });
+  }
+});
+
+// Create a new lead
+app.post('/api/leads', async (req, res) => {
+  try {
+    const { first_name, last_name, company, email, phone, industry, company_size } = req.body;
+
+    if (!first_name || !phone) {
+      return res.status(400).json({ success: false, error: 'first_name and phone are required' });
+    }
+
+    const db = getSupabaseClient(req);
+    const userId = await getUserId(req);
+
+    const { data, error } = await db
+      .from('leads')
+      .insert([
+        { first_name, last_name, company, email, phone, industry, company_size, status: 'new', user_id: userId }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json({ success: true, lead: data });
+  } catch (error) {
+    console.error('Error creating lead:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to create lead', message: error.message });
+  }
+});
+
+// Update lead (AI score, status, details)
+app.put('/api/leads/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { first_name, last_name, company, email, phone, industry, company_size, ai_score, ai_reasoning, status } = req.body;
+
+    const db = getSupabaseClient(req);
+    const { data, error } = await db
+      .from('leads')
+      .update({
+        first_name,
+        last_name,
+        company,
+        email,
+        phone,
+        industry,
+        company_size,
+        ai_score,
+        ai_reasoning,
+        status,
+        updated_at: new Date()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.json({ success: true, lead: data });
+  } catch (error) {
+    console.error('Error updating lead:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to update lead', message: error.message });
+  }
+});
+
+// AI Batch Lead Qualification
+app.post('/api/leads/qualify', async (req, res) => {
+  try {
+    let { target_industry, target_company_size, pain_points } = req.body;
+    const db = getSupabaseClient(req);
+
+    // If parameters not provided, fetch the latest campaign settings
+    if (!target_industry || !target_company_size) {
+      const { data: campaignData, error: campaignError } = await db
+        .from('campaigns')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (!campaignError && campaignData && campaignData.length > 0) {
+        target_industry = target_industry || campaignData[0].target_industry;
+        target_company_size = target_company_size || campaignData[0].target_company_size;
+        pain_points = pain_points || campaignData[0].pain_points;
+      }
+    }
+
+    // Fetch all leads that have not been scored yet
+    const { data: leads, error: leadsError } = await db
+      .from('leads')
+      .select('*')
+      .is('ai_score', null);
+
+    if (leadsError) throw leadsError;
+
+    if (!leads || leads.length === 0) {
+      return res.json({ success: true, message: 'No new leads to qualify', qualified_count: 0 });
+    }
+
+    const cerebrasKey = process.env.CEREBRAS_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
+
+    const qualifiedLeads = [];
+
+    // Process leads
+    for (const lead of leads) {
+      let fitScore = 'warm';
+      let reasoning = 'Scored using default matching parameters.';
+
+      const promptSystem = `You are an AI Sales Analyst. Your task is to evaluate if a lead fits a company's Ideal Customer Profile (ICP).
+You must output a raw JSON object ONLY, with no markdown formatting and no extra text.
+The JSON must have this structure:
+{
+  "fit_score": "hot" | "warm" | "cold",
+  "reasoning": "A 1-sentence explanation of why they got this score"
+}`;
+
+      const promptUser = `Lead Details:
+- Name: ${lead.first_name} ${lead.last_name || ''}
+- Company: ${lead.company || 'Unknown'}
+- Industry: ${lead.industry || 'Unknown'}
+- Size: ${lead.company_size || 'Unknown'}
+
+ICP Target Parameters:
+- Industry: ${target_industry || 'Any'}
+- Company Size: ${target_company_size || 'Any'}
+- Pain Points: ${pain_points || 'None specified'}
+
+Assess the lead fit. Be selective. If it is a perfect match, mark it 'hot'. If it matches partially, 'warm'. If it does not match, 'cold'.`;
+
+      try {
+        if (cerebrasKey) {
+          // Call Cerebras Llama 3.1 8B
+          const response = await axios.post(
+            'https://api.cerebras.ai/v1/chat/completions',
+            {
+              model: 'llama3.1-8b',
+              messages: [
+                { role: 'system', content: promptSystem },
+                { role: 'user', content: promptUser }
+              ],
+              temperature: 0.2,
+              response_format: { type: 'json_object' }
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${cerebrasKey}`,
+                'Content-Type': 'application/json'
+              },
+              timeout: 10000
+            }
+          );
+
+          const result = JSON.parse(response.data.choices[0].message.content.trim());
+          fitScore = result.fit_score.toLowerCase();
+          reasoning = result.reasoning;
+        } else if (openaiKey) {
+          // Call OpenAI GPT-4o-mini
+          const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+              model: 'gpt-4o-mini',
+              messages: [
+                { role: 'system', content: promptSystem },
+                { role: 'user', content: promptUser }
+              ],
+              temperature: 0.2,
+              response_format: { type: 'json_object' }
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${openaiKey}`,
+                'Content-Type': 'application/json'
+              },
+              timeout: 10000
+            }
+          );
+
+          const result = JSON.parse(response.data.choices[0].message.content.trim());
+          fitScore = result.fit_score.toLowerCase();
+          reasoning = result.reasoning;
+        } else {
+          // Fallback static rules (so it works offline or without API keys)
+          console.warn('WARNING: No LLM API Keys configured for scoring. Using rules engine fallback.');
+          const leadIndustry = (lead.industry || '').toLowerCase();
+          const targetInd = (target_industry || '').toLowerCase();
+          
+          if (targetInd && leadIndustry.includes(targetInd)) {
+            fitScore = 'hot';
+            reasoning = `Lead matches the target industry of '${target_industry}' perfectly.`;
+          } else if (lead.company_size && parseInt(lead.company_size) > 50) {
+            fitScore = 'warm';
+            reasoning = `Lead company size is ${lead.company_size}, showing decent scale.`;
+          } else {
+            fitScore = 'cold';
+            reasoning = `Lead does not match target industry '${target_industry}' or target company size.`;
+          }
+        }
+      } catch (err) {
+        console.error(`Error scoring lead ${lead.id}:`, err.message);
+        // Fallback for this single lead
+        fitScore = 'warm';
+        reasoning = `Scoring failed: ${err.message}. Defaulted to Warm.`;
+      }
+
+      // Update lead in Supabase
+      const { data: updatedLead, error: updateError } = await db
+        .from('leads')
+        .update({
+          ai_score: fitScore,
+          ai_reasoning: reasoning,
+          status: 'qualified',
+          updated_at: new Date()
+        })
+        .eq('id', lead.id)
+        .select()
+        .single();
+
+      if (!updateError && updatedLead) {
+        qualifiedLeads.push(updatedLead);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Qualified ${qualifiedLeads.length} leads successfully.`,
+      leads: qualifiedLeads
+    });
+
+  } catch (error) {
+    console.error('Error qualifying leads:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to qualify leads', message: error.message });
+  }
+});
+
+// Get call history for all or specific lead
+app.get('/api/calls', async (req, res) => {
+  try {
+    const { lead_id } = req.query;
+    const db = getSupabaseClient(req);
+    let query = db.from('calls').select('*, leads(first_name, last_name, company)');
+    
+    if (lead_id) {
+      query = query.eq('lead_id', lead_id);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json({ success: true, calls: data });
+  } catch (error) {
+    console.error('Error fetching calls:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to fetch calls', message: error.message });
+  }
+});
+
+// Record call initiation
+app.post('/api/calls', async (req, res) => {
+  try {
+    const { lead_id, room_name } = req.body;
+
+    if (!lead_id || !room_name) {
+      return res.status(400).json({ success: false, error: 'lead_id and room_name are required' });
+    }
+
+    const db = getSupabaseClient(req);
+    const userId = await getUserId(req);
+
+    const { data, error } = await db
+      .from('calls')
+      .insert([
+        { lead_id, room_name, outcome: 'no_answer', duration_seconds: 0, user_id: userId }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Also update lead status to 'calling'
+    await db.from('leads').update({ status: 'calling' }).eq('id', lead_id);
+
+    res.status(201).json({ success: true, call: data });
+  } catch (error) {
+    console.error('Error recording call:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to record call', message: error.message });
+  }
+});
+
+// Update call details (transcript, outcome, duration)
+app.put('/api/calls/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { transcript, outcome, duration_seconds } = req.body;
+
+    const db = getSupabaseClient(req);
+    const { data, error } = await db
+      .from('calls')
+      .update({
+        transcript,
+        outcome,
+        duration_seconds
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Update lead status based on call outcome
+    if (data.lead_id) {
+      let nextStatus = 'calling';
+      if (outcome === 'interested') {
+        nextStatus = 'converted';
+      } else if (outcome === 'not_interested') {
+        nextStatus = 'rejected';
+      } else if (outcome === 'busy' || outcome === 'no_answer') {
+        nextStatus = 'qualified'; // keep qualified but can retry
+      }
+      await db.from('leads').update({ status: nextStatus }).eq('id', data.lead_id);
+    }
+
+    res.json({ success: true, call: data });
+  } catch (error) {
+    console.error('Error updating call:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to update call', message: error.message });
+  }
+});
+
+// --- Campaigns / ICP Settings ---
+app.get('/api/campaigns', async (req, res) => {
+  try {
+    const db = getSupabaseClient(req);
+    const { data, error } = await db
+      .from('campaigns')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json({ success: true, campaigns: data });
+  } catch (error) {
+    console.error('Error fetching campaigns:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to fetch campaigns', message: error.message });
+  }
+});
+
+app.post('/api/campaigns', async (req, res) => {
+  try {
+    const { name, target_industry, target_company_size, pain_points, system_prompt_override } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ success: false, error: 'name is required' });
+    }
+
+    const db = getSupabaseClient(req);
+    const userId = await getUserId(req);
+
+    const { data, error } = await db
+      .from('campaigns')
+      .insert([
+        { name, target_industry, target_company_size, pain_points, system_prompt_override, user_id: userId }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    res.status(201).json({ success: true, campaign: data });
+  } catch (error) {
+    console.error('Error creating campaign:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to create campaign', message: error.message });
   }
 });
 

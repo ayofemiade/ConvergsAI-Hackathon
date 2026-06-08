@@ -4,6 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from './supabase';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -42,6 +43,31 @@ export interface SessionInfo {
     qualification_complete: boolean;
 }
 
+export interface Lead {
+    id: string;
+    first_name: string;
+    last_name?: string;
+    company?: string;
+    email?: string;
+    phone: string;
+    industry?: string;
+    company_size?: string;
+    ai_score?: 'hot' | 'warm' | 'cold' | null;
+    ai_reasoning?: string;
+    status: 'new' | 'qualified' | 'calling' | 'converted' | 'rejected';
+    created_at: string;
+}
+
+export interface Campaign {
+    id?: string;
+    name: string;
+    target_industry?: string;
+    target_company_size?: string;
+    pain_points?: string;
+    system_prompt_override?: string;
+    created_at?: string;
+}
+
 class APIClient {
     private baseURL: string;
 
@@ -55,9 +81,21 @@ class APIClient {
         const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
         const url = endpoint.startsWith('http') ? endpoint : `${base}${path}`;
 
+        // Get auth token from Supabase session if available
+        let authHeader = {};
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.access_token) {
+                authHeader = { Authorization: `Bearer ${session.access_token}` };
+            }
+        } catch (error) {
+            console.error('Error fetching Supabase session for API request:', error);
+        }
+
         const headers = {
             'Content-Type': 'application/json',
             'bypass-tunnel-reminder': 'true', // Bypasses localtunnel's splash screen
+            ...authHeader,
             ...(options.headers || {}),
         };
 
@@ -136,15 +174,82 @@ class APIClient {
     }
 
     /**
+     * Fetch all leads from the database
+     */
+    async fetchLeads(): Promise<Lead[]> {
+        const response = await this.fetchWithHeaders('/api/leads');
+        if (!response.ok) {
+            throw new Error('Failed to fetch leads');
+        }
+        const data = await response.json();
+        return data.leads || [];
+    }
+
+    /**
+     * Add a new lead to the database
+     */
+    async addLead(lead: Omit<Lead, 'id' | 'status' | 'created_at'>): Promise<Lead> {
+        const response = await this.fetchWithHeaders('/api/leads', {
+            method: 'POST',
+            body: JSON.stringify(lead)
+        });
+        if (!response.ok) {
+            throw new Error('Failed to add lead');
+        }
+        const data = await response.json();
+        return data.lead;
+    }
+
+    /**
+     * Qualify unscored leads using the AI engine
+     */
+    async qualifyLeads(icp?: { target_industry?: string; target_company_size?: string; pain_points?: string }): Promise<Lead[]> {
+        const response = await this.fetchWithHeaders('/api/leads/qualify', {
+            method: 'POST',
+            body: JSON.stringify(icp || {})
+        });
+        if (!response.ok) {
+            throw new Error('Failed to qualify leads');
+        }
+        const data = await response.json();
+        return data.leads || [];
+    }
+
+    /**
+     * Fetch campaigns
+     */
+    async fetchCampaigns(): Promise<Campaign[]> {
+        const response = await this.fetchWithHeaders('/api/campaigns');
+        if (!response.ok) {
+            throw new Error('Failed to fetch campaigns');
+        }
+        const data = await response.json();
+        return data.campaigns || [];
+    }
+
+    /**
+     * Create a new campaign/ICP configuration
+     */
+    async createCampaign(campaign: Campaign): Promise<Campaign> {
+        const response = await this.fetchWithHeaders('/api/campaigns', {
+            method: 'POST',
+            body: JSON.stringify(campaign)
+        });
+        if (!response.ok) {
+            throw new Error('Failed to create campaign');
+        }
+        const data = await response.json();
+        return data.campaign;
+    }
+
+    /**
      * Health check
      */
     async healthCheck(): Promise<{ status: string; services: any }> {
         const response = await this.fetchWithHeaders('/health');
-
         if (!response.ok) {
             throw new Error('Health check failed');
         }
-
         return response.json();
     }
 }
