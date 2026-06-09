@@ -318,7 +318,7 @@ export default function LandingPage() {
 
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full pt-4 hero-title-secondary" style={{ animationDelay: '0.8s' }}>
                             <button
-                                onClick={() => user ? window.location.href = '/dashboard' : openAuthModal()}
+                                onClick={() => user ? window.scrollTo({ top: 1000, behavior: 'smooth' }) : openAuthModal()}
                                 className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-bold py-4 px-10 rounded-full shadow-[0_0_40px_-10px_rgba(79,70,229,0.5)] hover:shadow-[0_0_60px_-10px_rgba(79,70,229,0.6)] hover:scale-105 transition-all duration-300 group flex items-center gap-2"
                             >
                                 {user ? 'View Dashboard' : 'Book a Demo'}
