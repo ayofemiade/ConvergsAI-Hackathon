@@ -393,13 +393,10 @@ export default function OnboardingPage() {
                     <ArrowRight size={24} />
                     Try In Playground
                 </Link>
-                <Link
-                    href="/dashboard"
-                    className="p-6 bg-white/5 border border-white/10 rounded-[24px] flex flex-col items-center justify-center gap-2 group cursor-pointer hover:bg-white/10 transition-all"
-                >
+                <div className="p-6 bg-white/5 border border-white/10 rounded-[24px] flex flex-col items-center justify-center gap-2 group cursor-pointer hover:bg-white/10 transition-all">
                     <div className="text-slate-400 font-bold">Go to Dashboard</div>
                     <div className="text-[10px] text-slate-600 font-black uppercase tracking-widest">Manage Production Calls</div>
-                </Link>
+                </div>
             </div>
 
             <p className="text-slate-500 text-sm">
