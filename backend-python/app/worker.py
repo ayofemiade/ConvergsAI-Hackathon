@@ -89,9 +89,9 @@ async def entrypoint(ctx: JobContext):
     stt = deepgram.STT(api_key=os.environ.get("DEEPGRAM_API_KEY"))
     
     agent_llm = openai.LLM(
-        model="llama3.1-8b",
-        base_url="https://api.cerebras.ai/v1",
-        api_key=os.environ.get("CEREBRAS_API_KEY"),
+        model="llama-3.3-70b-versatile",
+        base_url="https://api.groq.com/openai/v1",
+        api_key=os.environ.get("GROQ_API_KEY"),
         temperature=0.5,
         # Cap output to enforce prompt brevity and reduce tail latency.
         # 80 tokens ≈ 60 words — more than enough for 1-2 sentence replies.
