@@ -387,20 +387,20 @@ export default function UnifiedDemoPage() {
             </div>
 
             {/* Premium Control Center Navbar */}
-            <nav className="relative w-full z-50 pt-6 px-6 shrink-0">
-                <div className="max-w-7xl mx-auto glass-premium rounded-[2rem] h-20 flex items-center justify-between px-8 border border-white/5">
-                    <div className="flex items-center gap-3">
-                        <div className="relative w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
+            <nav className="relative w-full z-50 pt-3 px-3 sm:pt-6 sm:px-6 shrink-0">
+                <div className="max-w-7xl mx-auto glass-premium rounded-[1.2rem] sm:rounded-[2rem] h-16 sm:h-20 flex items-center justify-between px-4 sm:px-8 border border-white/5">
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                        <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20 text-sm">
                             C
-                            <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border border-slate-900 animate-pulse" />
+                            <div className="absolute -top-0.5 -right-0.5 w-2 w-2 bg-green-400 rounded-full border border-slate-900 animate-pulse" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-sm font-black uppercase tracking-[0.15em]">ConvergsAI</span>
-                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Control Hub</span>
+                            <span className="text-xs sm:text-sm font-black uppercase tracking-[0.12em] sm:tracking-[0.15em]">ConvergsAI</span>
+                            <span className="text-[8px] sm:text-[9px] text-slate-500 font-bold uppercase tracking-wider">Control Hub</span>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs font-bold text-slate-400">
+                    <div className="flex items-center gap-2 sm:gap-4 text-xs font-bold text-slate-400">
                         {stage === 'dashboard' && (
                             <div className="hidden md:flex items-center gap-2 bg-white/5 border border-white/5 py-1.5 px-3 rounded-full text-slate-300">
                                 <Activity size={12} className="text-green-400 animate-pulse" />
@@ -415,8 +415,10 @@ export default function UnifiedDemoPage() {
             </nav>
 
             {/* STAGE CONTAINER */}
-            <main className={`flex-1 w-full max-w-7xl mx-auto px-6 relative z-10 flex items-center justify-center transition-all duration-300 ${
-                (stage === 'onboarding' || stage === 'orchestration') ? 'py-4 min-h-[calc(100vh-140px)]' : 'py-8 min-h-[calc(100vh-180px)]'
+            <main className={`flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 relative z-10 flex items-center justify-center transition-all duration-300 ${
+                (stage === 'onboarding' || stage === 'orchestration') 
+                    ? 'py-3 min-h-[calc(100vh-110px)] sm:py-4 sm:min-h-[calc(100vh-140px)]' 
+                    : 'py-4 min-h-[calc(100vh-130px)] sm:py-8 sm:min-h-[calc(100vh-180px)]'
             }`}>
                 <AnimatePresence mode="wait">
 
@@ -428,56 +430,56 @@ export default function UnifiedDemoPage() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -15 }}
                             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                            className="w-full max-w-4xl text-center space-y-10 flex flex-col items-center"
+                            className="w-full max-w-4xl text-center space-y-6 sm:space-y-10 flex flex-col items-center py-2 sm:py-4"
                         >
                             {/* Glowing Product Tag */}
-                            <div className="inline-flex items-center gap-2.5 px-4.5 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-300 text-[10px] font-black tracking-widest uppercase shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-300 text-[9px] sm:text-[10px] font-black tracking-widest uppercase shadow-[0_0_15px_rgba(59,130,246,0.1)]">
                                 <Sparkles size={11} className="text-blue-400 animate-spin" style={{ animationDuration: '6s' }} />
                                 Interactive Sandbox Demonstration
                             </div>
 
                             {/* Headline */}
-                            <div className="space-y-6">
-                                <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] max-w-3xl mx-auto">
+                            <div className="space-y-4 sm:space-y-6">
+                                <h1 className="text-3xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.1] sm:leading-[1.05] max-w-3xl mx-auto">
                                     <span className="block text-slate-100">Hire Your Autonomous</span>
                                     <span className="block bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-indigo-600 drop-shadow-sm pb-1">
                                         AI Growth Employee
                                     </span>
                                 </h1>
-                                <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
+                                <p className="text-sm sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed px-4">
                                     Emma handles bulk sales qualification, calls target prospects, and automates customer support in real-time. Experience the control room dashboard below.
                                 </p>
                             </div>
 
                             {/* Main CTA */}
-                            <div className="pt-4 flex flex-col items-center gap-4">
+                            <div className="pt-2 sm:pt-4 flex flex-col items-center gap-3 w-full px-4 sm:px-0">
                                 <motion.button
-                                    whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(99,102,241,0.5)' }}
+                                    whileHover={{ scale: 1.03, boxShadow: '0 0 50px rgba(99,102,241,0.5)' }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={startOnboarding}
-                                    className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white text-xl font-extrabold py-5 px-16 rounded-full shadow-[0_0_35px_rgba(79,70,229,0.35)] group flex items-center gap-3 transition-all duration-300 border border-white/10"
+                                    className="w-full sm:w-auto bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white text-base sm:text-xl font-extrabold py-4 px-8 sm:py-5 sm:px-16 rounded-full shadow-[0_0_35px_rgba(79,70,229,0.35)] group flex items-center justify-center gap-3 transition-all duration-300 border border-white/10"
                                 >
                                     Activate AI Growth Employee
-                                    <ArrowRight size={22} className="group-hover:translate-x-1.5 transition-transform" />
+                                    <ArrowRight size={18} className="group-hover:translate-x-1.5 transition-transform" />
                                 </motion.button>
-                                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                                <span className="text-[9px] sm:text-[10px] font-bold text-slate-600 uppercase tracking-widest text-center">
                                     Instant WebRTC Connection • No Registration Required
                                 </span>
                             </div>
 
                             {/* Core Micro-Features Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full pt-16 border-t border-white/5">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 w-full pt-10 sm:pt-16 border-t border-white/5">
                                 {[
-                                    { title: 'Interactive Onboarding', icon: <MessageSquare className="text-blue-400" size={20} />, desc: 'Configure customized scripts and target ICP objectives via conversational chat.' },
-                                    { title: 'Magical Asset Orchestration', icon: <Layers className="text-indigo-400" size={20} />, desc: 'Watch client pipelines crawl directories, map ICPs, and launch endpoints.' },
-                                    { title: 'Real-Time Voice Sync Control', icon: <Activity className="text-emerald-400" size={20} />, desc: 'Connect direct to LiveKit WebRTC and view pipeline metrics extraction live.' }
+                                    { title: 'Interactive Onboarding', icon: <MessageSquare className="text-blue-400" size={18} />, desc: 'Configure customized scripts and target ICP objectives via conversational chat.' },
+                                    { title: 'Magical Asset Orchestration', icon: <Layers className="text-indigo-400" size={18} />, desc: 'Watch client pipelines crawl directories, map ICPs, and launch endpoints.' },
+                                    { title: 'Real-Time Voice Sync Control', icon: <Activity className="text-emerald-400" size={18} />, desc: 'Connect direct to LiveKit WebRTC and view pipeline metrics extraction live.' }
                                 ].map((item, idx) => (
-                                    <div key={idx} className="glass-premium p-6 rounded-[2rem] border border-white/5 text-left space-y-4 hover:border-white/10 transition-colors">
-                                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                                    <div key={idx} className="glass-premium p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] border border-white/5 text-left space-y-3 sm:space-y-4 hover:border-white/10 transition-colors">
+                                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
                                             {item.icon}
                                         </div>
-                                        <h3 className="font-bold text-sm text-slate-200">{item.title}</h3>
-                                        <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                                        <h3 className="font-bold text-xs sm:text-sm text-slate-200">{item.title}</h3>
+                                        <p className="text-[11px] sm:text-xs text-slate-500 leading-relaxed">{item.desc}</p>
                                     </div>
                                 ))}
                             </div>
@@ -491,20 +493,21 @@ export default function UnifiedDemoPage() {
                             initial={{ opacity: 0, scale: 0.98 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.98 }}
-                            className="w-full max-w-2xl glass-premium rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col h-[470px] max-h-[calc(100vh-200px)] shadow-2xl"
+                            className="w-full max-w-2xl glass-premium rounded-[1.5rem] sm:rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col h-[450px] max-h-[calc(100vh-140px)] sm:max-h-[calc(100vh-200px)] shadow-2xl"
                         >
                             {/* Chat Header */}
-                            <div className="shrink-0 bg-white/4 border-b border-white/5 py-5 px-8 flex items-center justify-between">
-                                <div className="flex items-center gap-3.5">
-                                    <div className="relative w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-0.5">
+                            <div className="shrink-0 bg-white/4 border-b border-white/5 py-3.5 px-4 sm:py-5 sm:px-8 flex items-center justify-between">
+                                <div className="flex items-center gap-2.5 sm:gap-3.5">
+                                    <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-0.5">
                                         <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center">
-                                            <Bot size={20} className="text-blue-400" />
+                                            <Bot size={16} className="text-blue-400 sm:hidden" />
+                                            <Bot size={20} className="text-blue-400 hidden sm:block" />
                                         </div>
-                                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-slate-950 animate-pulse" />
+                                        <span className="absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-400 rounded-full border border-slate-950 animate-pulse" />
                                     </div>
                                     <div className="flex flex-col text-left">
-                                        <span className="text-sm font-black text-slate-200">Emma</span>
-                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">AI Operations Officer</span>
+                                        <span className="text-xs sm:text-sm font-black text-slate-200">Emma</span>
+                                        <span className="text-[8px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider">AI Operations Officer</span>
                                     </div>
                                 </div>
                                 <button
@@ -516,7 +519,7 @@ export default function UnifiedDemoPage() {
                             </div>
 
                             {/* Chat Conversation Scroll Feed */}
-                            <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-950/20">
+                            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-3.5 sm:space-y-4 custom-scrollbar bg-slate-950/20">
                                 {chatMessages.map(msg => (
                                     <motion.div
                                         key={msg.id}
@@ -524,8 +527,8 @@ export default function UnifiedDemoPage() {
                                         animate={{ opacity: 1, y: 0 }}
                                         className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                     >
-                                        <div className="flex flex-col gap-2 max-w-[85%]">
-                                            <div className={`px-5 py-4.5 rounded-[1.5rem] text-sm leading-[1.5] ${
+                                        <div className="flex flex-col gap-1.5 sm:gap-2 max-w-[85%]">
+                                            <div className={`px-4 py-3 sm:px-5 sm:py-4.5 rounded-[1.2rem] sm:rounded-[1.5rem] text-[13px] sm:text-sm leading-[1.5] ${
                                                 msg.role === 'user'
                                                     ? 'bg-blue-600 text-white rounded-tr-sm'
                                                     : 'bg-white/5 border border-white/5 text-slate-100 rounded-tl-sm backdrop-blur-sm'
@@ -535,14 +538,14 @@ export default function UnifiedDemoPage() {
 
                                             {/* Interactive Multi-Choice Options */}
                                             {msg.options && onboardingStep === 2 && (
-                                                <div className="flex flex-col gap-2.5 pt-2">
+                                                <div className="flex flex-col gap-2 pt-1.5">
                                                     {msg.options.map((opt, i) => (
                                                         <motion.button
                                                             whileHover={{ scale: 1.02 }}
                                                             whileTap={{ scale: 0.98 }}
                                                             key={i}
                                                             onClick={() => handleSelectOption(opt)}
-                                                            className="px-5 py-3.5 bg-slate-900 border border-white/5 rounded-xl text-left text-xs font-semibold text-blue-300 hover:text-white hover:bg-blue-600/10 hover:border-blue-500/30 transition-all shadow"
+                                                            className="px-4 py-2.5 sm:px-5 sm:py-3.5 bg-slate-900 border border-white/5 rounded-xl text-left text-[11px] sm:text-xs font-semibold text-blue-300 hover:text-white hover:bg-blue-600/10 hover:border-blue-500/30 transition-all shadow"
                                                         >
                                                             {opt}
                                                         </motion.button>
@@ -562,33 +565,33 @@ export default function UnifiedDemoPage() {
                                         e.preventDefault();
                                         handleSendOnboardingMessage(chatInput);
                                     }}
-                                    className="shrink-0 p-5 bg-slate-950 border-t border-white/5 flex gap-3 items-center"
+                                    className="shrink-0 p-3 sm:p-5 bg-slate-950 border-t border-white/5 flex gap-2 sm:gap-3 items-center"
                                 >
                                     <input
                                         type="text"
                                         value={chatInput}
                                         onChange={(e) => setChatInput(e.target.value)}
                                         placeholder={onboardingStep === 0 ? "Enter business name..." : "Enter services offered..."}
-                                        className="flex-1 bg-[#0d1527] text-white border border-white/10 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600 font-medium transition-all"
+                                        className="flex-1 bg-[#0d1527] text-white border border-white/10 rounded-xl px-4 py-2.5 sm:px-5 sm:py-4 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600 font-medium transition-all"
                                     />
                                     <button
                                         type="submit"
                                         disabled={!chatInput.trim()}
-                                        className="bg-white text-black px-6 py-4 rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-20 flex items-center justify-center"
+                                        className="bg-white text-black px-4 py-2.5 sm:px-6 sm:py-4 rounded-xl font-bold text-xs sm:text-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-20 flex items-center justify-center shrink-0"
                                     >
                                         Send
                                     </button>
                                 </form>
                             ) : onboardingStep === 3 ? (
-                                <div className="shrink-0 p-6 bg-slate-950 border-t border-white/5 flex justify-center">
+                                <div className="shrink-0 p-4 sm:p-6 bg-slate-950 border-t border-white/5 flex justify-center">
                                     <motion.button
                                         whileHover={{ scale: 1.04, boxShadow: '0 0 40px rgba(99,102,241,0.45)' }}
                                         whileTap={{ scale: 0.98 }}
                                         onClick={startSynthesis}
-                                        className="bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white font-extrabold py-4 px-12 rounded-full text-base border border-white/10 shadow-lg flex items-center gap-2 group transition-all"
+                                        className="bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white font-extrabold py-3 px-8 sm:py-4 sm:px-12 rounded-full text-sm sm:text-base border border-white/10 shadow-lg flex items-center gap-2 group transition-all"
                                     >
                                         Synthesize AI Employee
-                                        <Sparkles size={16} className="group-hover:rotate-12 transition-transform" />
+                                        <Sparkles size={14} className="group-hover:rotate-12 transition-transform" />
                                     </motion.button>
                                 </div>
                             ) : null}
@@ -602,10 +605,10 @@ export default function UnifiedDemoPage() {
                             initial={{ opacity: 0, scale: 0.96 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 1.05 }}
-                            className="w-full max-w-xl text-center space-y-6 flex flex-col items-center"
+                            className="w-full max-w-xl text-center space-y-4 sm:space-y-6 flex flex-col items-center py-2"
                         >
                             {/* Synthesis brain graphic */}
-                            <div className="relative w-28 h-28 flex items-center justify-center">
+                            <div className="relative w-20 h-20 sm:w-28 sm:h-28 flex items-center justify-center">
                                 <motion.div
                                     animate={{ rotate: 360 }}
                                     transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
@@ -620,25 +623,26 @@ export default function UnifiedDemoPage() {
                                 <motion.div
                                     animate={{ scale: [1, 1.1, 1], boxShadow: ['0 0 25px rgba(59,130,246,0.4)', '0 0 50px rgba(79,70,229,0.7)', '0 0 25px rgba(59,130,246,0.4)'] }}
                                     transition={{ duration: 2, repeat: Infinity }}
-                                    className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 border border-white/25 flex items-center justify-center shadow-lg"
+                                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 border border-white/25 flex items-center justify-center shadow-lg"
                                 >
-                                    <Bot size={24} className="text-white" />
+                                    <Bot size={20} className="text-white sm:hidden" />
+                                    <Bot size={24} className="text-white hidden sm:block" />
                                 </motion.div>
                             </div>
 
-                            <div className="space-y-1.5 w-full">
-                                <h2 className="text-2xl font-bold tracking-tight">Synthesizing Pipeline</h2>
-                                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">
+                            <div className="space-y-1 w-full">
+                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Synthesizing Pipeline</h2>
+                                <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest font-black">
                                     Crafting Agent Prompts & Context Registers
                                 </p>
                             </div>
 
                             {/* Staggered progress checkpoints */}
-                            <div className="w-full space-y-2 text-left max-w-md mx-auto">
+                            <div className="w-full space-y-1.5 sm:space-y-2 text-left max-w-md mx-auto">
                                 {synthesisLogs.map((log) => (
                                     <div
                                         key={log.id}
-                                        className={`py-2.5 px-4 rounded-xl border flex items-center justify-between transition-all duration-300 ${
+                                        className={`py-2 px-3 sm:py-2.5 sm:px-4 rounded-xl border flex items-center justify-between transition-all duration-300 ${
                                             log.status === 'success'
                                                 ? 'bg-blue-600/5 border-blue-500/20 text-slate-100'
                                                 : log.status === 'pending'
@@ -646,22 +650,22 @@ export default function UnifiedDemoPage() {
                                                     : 'bg-transparent border-transparent text-slate-600'
                                         }`}
                                     >
-                                        <span className="text-xs font-semibold truncate">
+                                        <span className="text-[11px] sm:text-xs font-semibold truncate">
                                             {log.text}
                                         </span>
                                         {log.status === 'success' ? (
-                                            <CheckCircle2 size={14} className="text-blue-500 shrink-0" />
+                                            <CheckCircle2 size={13} className="text-blue-500 shrink-0" />
                                         ) : log.status === 'pending' ? (
-                                            <Loader2 size={12} className="text-blue-400 shrink-0" />
+                                            <Loader2 size={11} className="text-blue-400 shrink-0" />
                                         ) : (
-                                            <div className="w-3.5 h-3.5 rounded-full border border-slate-800 shrink-0" />
+                                            <div className="w-3 h-3 rounded-full border border-slate-800 shrink-0" />
                                         )}
                                     </div>
                                 ))}
                             </div>
 
                             {/* Dynamic Progress Bar */}
-                            <div className="w-full max-w-md bg-white/5 h-1.5 rounded-full overflow-hidden border border-white/5">
+                            <div className="w-full max-w-md bg-white/5 h-1 sm:h-1.5 rounded-full overflow-hidden border border-white/5">
                                 <motion.div
                                     animate={{ width: `${synthesisProgress}%` }}
                                     transition={{ duration: 0.5 }}
@@ -678,24 +682,25 @@ export default function UnifiedDemoPage() {
                             initial={{ opacity: 0, y: 15 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0 }}
-                            className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch pt-2"
+                            className="w-full grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-8 items-stretch pt-2"
                         >
                             {/* DASHBOARD HEADER - full span */}
-                            <div className="lg:col-span-12 glass-premium p-6 rounded-[2rem] border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="lg:col-span-12 glass-premium p-4 sm:p-6 rounded-[1.2rem] sm:rounded-[2rem] border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
-                                        <LayoutDashboard size={18} className="text-blue-400" />
-                                        <h2 className="text-lg font-black text-slate-100 uppercase tracking-wide">
+                                        <LayoutDashboard size={16} className="text-blue-400 sm:hidden" />
+                                        <LayoutDashboard size={18} className="text-blue-400 hidden sm:block" />
+                                        <h2 className="text-sm sm:text-lg font-black text-slate-100 uppercase tracking-wide">
                                             {bizName || "Buka Foods"} Control Room
                                         </h2>
                                     </div>
-                                    <p className="text-xs text-slate-500 font-medium">
+                                    <p className="text-[10px] sm:text-xs text-slate-500 font-medium">
                                         Outreach Mode: {bizGoal === 'support' ? 'Customer Support Triage' : 'Sales Contract Qualification'} • Core target: {bizOffer || 'Traditional catering'}
                                     </p>
                                 </div>
                                 <button
                                     onClick={handleResetDashboard}
-                                    className="shrink-0 flex items-center gap-2 text-[10px] font-bold text-slate-500 hover:text-white transition-colors bg-white/5 px-4 py-2 border border-white/5 hover:border-white/10 rounded-full uppercase tracking-wider"
+                                    className="shrink-0 flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-bold text-slate-500 hover:text-white transition-colors bg-white/5 px-3 py-1.5 sm:px-4 sm:py-2 border border-white/5 hover:border-white/10 rounded-full uppercase tracking-wider"
                                 >
                                     <RefreshCw size={10} /> Restart Demo
                                 </button>
@@ -703,21 +708,21 @@ export default function UnifiedDemoPage() {
 
                             {/* COLUMN 1: WebRTC Client Phone Mockup Widget (lg-span-4) */}
                             <div className="lg:col-span-4 flex flex-col justify-start">
-                                <div className="relative w-full max-w-[370px] mx-auto min-h-[580px]">
+                                <div className="relative w-full max-w-[370px] mx-auto h-[530px] sm:h-[580px] lg:h-[600px]">
                                     {/* Hardward outline */}
                                     <div
-                                        className="absolute inset-0 rounded-[3.2rem] bg-gradient-to-b from-[#2c2c30] via-[#1c1c20] to-[#111115]"
+                                        className="hidden sm:block absolute inset-0 rounded-[3.2rem] bg-gradient-to-b from-[#2c2c30] via-[#1c1c20] to-[#111115]"
                                         style={{ boxShadow: '0 50px 130px -20px rgba(0,0,0,0.95), 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.13), inset 0 -1px 0 rgba(0,0,0,0.5)' }}
                                     />
                                     {/* Frame lights */}
-                                    <div className="absolute inset-0 rounded-[3.2rem] overflow-hidden pointer-events-none">
+                                    <div className="hidden sm:block absolute inset-0 rounded-[3.2rem] overflow-hidden pointer-events-none">
                                         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.04] to-white/[0.09]" />
                                         <div className="absolute top-0 inset-x-6 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
                                     </div>
 
-                                    {/* Screen Bezel Bevel (8px) */}
+                                    {/* Screen Bezel Bevel (8px) on sm, border glass-premium card on mobile */}
                                     <div
-                                        className="absolute inset-[8px] rounded-[2.6rem] bg-black overflow-hidden flex flex-col"
+                                        className="absolute inset-0 sm:inset-[8px] rounded-[1.5rem] sm:rounded-[2.6rem] bg-black overflow-hidden flex flex-col border border-white/5 sm:border-none shadow-2xl"
                                         style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 2px 8px rgba(0,0,0,0.8)' }}
                                     >
                                         <PhoneCallUI
@@ -735,21 +740,21 @@ export default function UnifiedDemoPage() {
                             </div>
 
                             {/* COLUMN 2: Operations Hub Pipeline Leads (lg-span-5) */}
-                            <div className="lg:col-span-5 space-y-6 flex flex-col">
+                            <div className="lg:col-span-5 space-y-4 sm:space-y-6 flex flex-col">
                                 {/* Statistics Grid */}
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="glass-premium p-5 rounded-[2rem] border border-white/5 space-y-1">
-                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Projected Revenue</span>
-                                        <div className="text-xl font-black text-slate-200 tracking-tight">{projectedRevenue}</div>
+                                    <div className="glass-premium p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] border border-white/5 space-y-1">
+                                        <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider">Projected Revenue</span>
+                                        <div className="text-lg sm:text-xl font-black text-slate-200 tracking-tight">{projectedRevenue}</div>
                                     </div>
-                                    <div className="glass-premium p-5 rounded-[2rem] border border-white/5 space-y-1">
-                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Prospects Discoverd</span>
-                                        <div className="text-xl font-black text-slate-200 tracking-tight">42 Leads</div>
+                                    <div className="glass-premium p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] border border-white/5 space-y-1">
+                                        <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider">Prospects Discovered</span>
+                                        <div className="text-lg sm:text-xl font-black text-slate-200 tracking-tight">42 Leads</div>
                                     </div>
                                 </div>
 
                                 {/* Leads Pipeline List */}
-                                <div className="glass-premium p-5 rounded-[2rem] border border-white/5 flex-1 flex flex-col overflow-hidden">
+                                <div className="glass-premium p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] border border-white/5 h-[380px] lg:h-auto flex-1 flex flex-col overflow-hidden">
                                     <div className="flex items-center justify-between mb-4">
                                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                             <Users size={14} className="text-indigo-400" /> Targeted Outbound Pipeline
@@ -764,7 +769,7 @@ export default function UnifiedDemoPage() {
                                         {leads.map((lead, idx) => (
                                             <div
                                                 key={idx}
-                                                className={`p-3.5 rounded-2xl border transition-all duration-300 ${
+                                                className={`p-3 rounded-xl sm:p-3.5 sm:rounded-2xl border transition-all duration-300 ${
                                                     idx === 0
                                                         ? 'bg-blue-600/5 border-blue-500/25 ring-1 ring-blue-500/10'
                                                         : 'bg-white/[0.02] border-white/5 hover:border-white/10'
@@ -803,15 +808,15 @@ export default function UnifiedDemoPage() {
                             </div>
 
                             {/* COLUMN 3: Live Sync CRM Extractor & Wave (lg-span-3) */}
-                            <div className="lg:col-span-3 space-y-6 flex flex-col justify-between">
+                            <div className="lg:col-span-3 space-y-4 sm:space-y-6 flex flex-col justify-start">
                                 {/* Soundwave representation */}
-                                <div className="glass-premium p-5 rounded-[2rem] border border-white/5 text-center space-y-4 flex flex-col items-center">
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                <div className="glass-premium p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] border border-white/5 text-center space-y-3 sm:space-y-4 flex flex-col items-center">
+                                    <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider">
                                         Active Channel Frequency
                                     </span>
 
                                     {/* Wave dots */}
-                                    <div className="flex gap-1 h-14 items-center justify-center w-full">
+                                    <div className="flex gap-1 h-12 sm:h-14 items-center justify-center w-full">
                                         {activeCallStatus === 'connected' ? (
                                             Array.from({ length: 14 }).map((_, i) => (
                                                 <motion.div
@@ -834,7 +839,7 @@ export default function UnifiedDemoPage() {
                                         )}
                                     </div>
 
-                                    <span className="text-[9px] font-mono text-slate-400 uppercase font-black tracking-widest">
+                                    <span className="text-[8px] sm:text-[9px] font-mono text-slate-400 uppercase font-black tracking-widest">
                                         {activeCallStatus === 'connected'
                                             ? `WebRTC: ${activeAgentState.toUpperCase()}`
                                             : `Line Status: ${activeCallStatus.toUpperCase()}`}
@@ -842,13 +847,13 @@ export default function UnifiedDemoPage() {
                                 </div>
 
                                 {/* Extracted Metadata */}
-                                <div className="glass-premium p-5 rounded-[2rem] border border-white/5 flex-1 flex flex-col overflow-hidden">
+                                <div className="glass-premium p-4 sm:p-5 rounded-[1.5rem] sm:rounded-[2rem] border border-white/5 h-[320px] lg:h-auto flex flex-col overflow-hidden">
                                     <div className="flex items-center gap-2 mb-4 shrink-0">
                                         <Database size={13} className="text-emerald-400" />
                                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">CRM Metadata Extractor</h3>
                                     </div>
 
-                                    <div className="flex-1 space-y-3.5 overflow-y-auto pr-1 custom-scrollbar">
+                                    <div className="flex-1 space-y-3 overflow-y-auto pr-1 custom-scrollbar">
                                         {[
                                             { label: 'Budget/Pricing status', value: extractedData.budget, color: 'text-indigo-400' },
                                             { label: 'Primary Pain Point', value: extractedData.painPoint, color: 'text-indigo-400' },
@@ -856,7 +861,7 @@ export default function UnifiedDemoPage() {
                                             { label: 'CRM Next Action', value: extractedData.nextAction, color: 'text-indigo-400' },
                                             { label: 'Conversation Sentiment', value: extractedData.sentiment, color: extractedData.sentiment.includes('High') ? 'text-green-400 font-bold' : 'text-blue-400' },
                                         ].map((field, idx) => (
-                                            <div key={idx} className="p-3 bg-white/[0.02] border border-white/5 rounded-xl space-y-1">
+                                            <div key={idx} className="p-2.5 bg-white/[0.02] border border-white/5 rounded-xl space-y-0.5">
                                                 <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">
                                                     {field.label}
                                                 </div>
@@ -869,12 +874,12 @@ export default function UnifiedDemoPage() {
                                 </div>
 
                                 {/* Live Transcripts Bubble Log */}
-                                <div className="glass-premium p-4.5 rounded-[2rem] border border-white/5 h-[170px] overflow-hidden flex flex-col">
-                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 shrink-0">
+                                <div className="glass-premium p-4 sm:p-4.5 rounded-[1.5rem] sm:rounded-[2rem] border border-white/5 h-[150px] sm:h-[170px] overflow-hidden flex flex-col">
+                                    <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 shrink-0">
                                         Live Transcript Feed
                                     </span>
 
-                                    <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar text-[11px] leading-[1.4]">
+                                    <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar text-[10px] sm:text-[11px] leading-[1.4]">
                                         {liveCallTranscript && (
                                             <div className="italic text-blue-300 font-medium">
                                                 <span className="font-bold uppercase tracking-wider text-[8px] mr-1">
@@ -896,7 +901,7 @@ export default function UnifiedDemoPage() {
                                         ))}
 
                                         {dashboardTranscripts.length === 0 && !liveCallTranscript && (
-                                            <div className="text-slate-600 text-xs italic text-center pt-8">
+                                            <div className="text-slate-600 text-xs italic text-center pt-6 sm:pt-8">
                                                 Speak into browser microphone to sync data...
                                             </div>
                                         )}

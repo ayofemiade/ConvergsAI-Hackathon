@@ -44,8 +44,8 @@ interface PhoneCallUIProps {
 
 /** iOS-style status bar */
 const StatusBar = React.memo(() => (
-    <div className="shrink-0 h-12 flex items-center justify-between px-6 text-white/90 relative z-30">
-        <span className="text-[11px] font-black tracking-tighter flex items-center gap-1.5">
+    <div className="shrink-0 h-10 sm:h-12 flex items-center justify-between px-6 text-white/90 relative z-30">
+        <span className="hidden sm:flex text-[11px] font-black tracking-tighter items-center gap-1.5">
             9:41
             <motion.span
                 animate={{ opacity: [1, 0, 1] }}
@@ -54,7 +54,7 @@ const StatusBar = React.memo(() => (
             />
         </span>
         <div className="flex-1" />
-        <div className="flex items-center gap-2 opacity-60">
+        <div className="hidden sm:flex items-center gap-2 opacity-60">
             <SignalHigh size={13} strokeWidth={2.5} />
             <Wifi size={13} strokeWidth={2.5} />
             <div className="flex items-center gap-0.5">
@@ -140,7 +140,7 @@ const MessageBubble = React.memo(({ msg }: { msg: Message }) => (
         className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
     >
         <div className={`
-            max-w-[82%] px-4 py-3 rounded-[18px] text-[13px] font-medium leading-[1.45] shadow-sm
+            max-w-[82%] px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl sm:rounded-[18px] text-[12.5px] sm:text-[13px] font-medium leading-[1.45] shadow-sm
             ${msg.role === 'user'
                 ? 'bg-blue-600 text-white rounded-br-[4px]'
                 : 'bg-white/8 text-slate-100 rounded-bl-[4px] border border-white/10 backdrop-blur-sm'
@@ -367,20 +367,21 @@ export default function PhoneCallUI({
                             <div className="relative z-10">
                                 <motion.div
                                     whileHover={{ scale: 1.04 }}
-                                    className="w-32 h-32 rounded-[2.5rem] bg-gradient-to-br from-blue-500 to-indigo-600 p-1 shadow-2xl shadow-blue-600/40"
+                                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl sm:rounded-[2.5rem] bg-gradient-to-br from-blue-500 to-indigo-600 p-1 shadow-2xl shadow-blue-600/40"
                                 >
-                                    <div className="w-full h-full bg-slate-950 rounded-[2.2rem] flex items-center justify-center">
-                                        <Bot size={60} className="text-white" />
+                                    <div className="w-full h-full bg-slate-950 rounded-xl sm:rounded-[2.2rem] flex items-center justify-center">
+                                        <Bot size={40} className="text-white sm:hidden" />
+                                        <Bot size={60} className="text-white hidden sm:block" />
                                     </div>
                                 </motion.div>
-                                <div className="absolute -bottom-1 -right-1 bg-green-400 text-[9px] font-black text-black px-3 py-0.5 rounded-full border-2 border-slate-950 shadow">
+                                <div className="absolute -bottom-1 -right-1 bg-green-400 text-[9px] font-black text-black px-2.5 py-0.5 rounded-full border-2 border-slate-950 shadow">
                                     SECURE LINE
                                 </div>
                             </div>
 
                             <div className="relative z-10">
-                                <h2 className="text-3xl font-black text-white mb-1.5 tracking-tight">Emma</h2>
-                                <p className="text-slate-400 text-sm max-w-[200px] leading-relaxed font-medium">
+                                <h2 className="text-2xl sm:text-3xl font-black text-white mb-1.5 tracking-tight">Emma</h2>
+                                <p className="text-slate-400 text-xs sm:text-sm max-w-[200px] leading-relaxed font-medium">
                                     AI voice intelligence. Ready when you are.
                                 </p>
                             </div>
@@ -417,9 +418,10 @@ export default function PhoneCallUI({
                                     transition={{ duration: 1.8, repeat: Infinity }}
                                     className="absolute -inset-5 rounded-full border border-blue-500/40"
                                 />
-                                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-1 shadow-2xl shadow-blue-500/30">
+                                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-1 shadow-2xl shadow-blue-500/30">
                                     <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center">
-                                        <Bot size={46} className="text-blue-300" />
+                                        <Bot size={36} className="text-blue-300 sm:hidden" />
+                                        <Bot size={46} className="text-blue-300 hidden sm:block" />
                                     </div>
                                 </div>
                             </div>
@@ -495,7 +497,7 @@ export default function PhoneCallUI({
                                             className={`flex ${liveTranscript.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                         >
                                             <div className={`
-                                                max-w-[82%] px-4 py-3 rounded-[18px] text-[13px] font-medium leading-[1.45]
+                                                max-w-[82%] px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl sm:rounded-[18px] text-[12.5px] sm:text-[13px] font-medium leading-[1.45]
                                                 ${liveTranscript.role === 'user'
                                                     ? 'bg-blue-600/80 text-white rounded-br-[4px]'
                                                     : 'bg-white/6 text-slate-200 rounded-bl-[4px] border border-white/10'
@@ -523,32 +525,14 @@ export default function PhoneCallUI({
                                 shrink-0 ensures it never gets squashed by the message area.
                                 z-20 keeps it above scroll content.
                             */}
-                            <div className="shrink-0 z-20 bg-black/70 backdrop-blur-2xl border-t border-white/5 px-3 py-3 pb-7">
-                                <div className="flex gap-2 items-center">
-                                    <input
-                                        type="text"
-                                        value={inputText}
-                                        onChange={e => setInputText(e.target.value)}
-                                        onKeyPress={handleKeyPress}
-                                        placeholder="Message Emma..."
-                                        className="flex-1 min-w-0 bg-[#0d1527] border border-white/10 rounded-2xl px-4 py-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600 font-medium transition-all"
-                                    />
-                                    <button
-                                        onClick={sendMessage}
-                                        disabled={!inputText.trim()}
-                                        aria-label="Send message"
-                                        className="w-11 h-11 shrink-0 flex items-center justify-center bg-white text-black rounded-full hover:scale-105 disabled:opacity-20 transition-all active:scale-95 shadow-lg"
-                                    >
-                                        <Send size={16} />
-                                    </button>
-                                    <button
-                                        onClick={endCall}
-                                        aria-label="End call"
-                                        className="w-11 h-11 shrink-0 flex items-center justify-center bg-red-500 text-white rounded-full hover:scale-105 transition-all active:scale-95 shadow-lg"
-                                    >
-                                        <PhoneOff size={16} />
-                                    </button>
-                                </div>
+                            <div className="shrink-0 z-20 bg-black/70 backdrop-blur-2xl border-t border-white/5 px-3 py-4 pb-6 sm:pb-9 flex justify-center items-center">
+                                <button
+                                    onClick={endCall}
+                                    aria-label="End call"
+                                    className="w-14 h-14 flex items-center justify-center bg-red-500 hover:bg-red-600 text-white rounded-full hover:scale-105 transition-all active:scale-95 shadow-lg shadow-red-500/20"
+                                >
+                                    <PhoneOff size={22} />
+                                </button>
                             </div>
                         </motion.div>
                     )}
@@ -560,8 +544,9 @@ export default function PhoneCallUI({
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                             className="absolute inset-0 flex flex-col items-center justify-center text-center gap-6 px-8"
                         >
-                            <div className="w-20 h-20 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center">
-                                <CheckCircle2 size={36} className="text-green-400" />
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center">
+                                <CheckCircle2 size={28} className="text-green-400 sm:hidden" />
+                                <CheckCircle2 size={36} className="text-green-400 hidden sm:block" />
                             </div>
                             <div>
                                 <h3 className="text-xl font-bold text-white mb-2">Demo Completed</h3>
