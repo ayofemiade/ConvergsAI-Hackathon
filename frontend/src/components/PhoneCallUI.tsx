@@ -34,6 +34,10 @@ interface PhoneCallUIProps {
     onCallStart?: () => void;
     mode?: 'sales' | 'support';
     persona?: string;
+    onTranscript?: (role: 'user' | 'assistant', content: string, isFinal: boolean) => void;
+    onCallStateChange?: (state: CallState) => void;
+    onAgentStateChange?: (state: AgentState) => void;
+    onLiveTranscript?: (transcript: { text: string; role: 'user' | 'assistant' } | null) => void;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -172,6 +176,10 @@ export default function PhoneCallUI({
     onCallStart,
     mode = 'sales',
     persona = 'Emma',
+    onTranscript,
+    onCallStateChange,
+    onAgentStateChange,
+    onLiveTranscript,
 }: PhoneCallUIProps = {}) {
 
     const [callState, setCallState] = useState<CallState>('idle');
@@ -192,6 +200,15 @@ export default function PhoneCallUI({
             scrollRef.current.scrollTop = 0;
         }
     }, [messages, liveTranscript]);
+
+    // ── Call State and Agent State hooks ─────────────────────────────────────
+    useEffect(() => {
+        onCallStateChange?.(callState);
+    }, [callState, onCallStateChange]);
+
+    useEffect(() => {
+        onAgentStateChange?.(agentState);
+    }, [agentState, onAgentStateChange]);
 
     // ── Cleanup on unmount ───────────────────────────────────────────────────
     const cleanup = React.useCallback(() => {
@@ -237,18 +254,29 @@ export default function PhoneCallUI({
                     const data = JSON.parse(str);
                     if (data.type === 'transcript' || data.type === 'text') {
                         const isFinal = data.is_final !== false;
+                        const role = data.role || 'assistant';
+                        const text = data.content || data.text;
+
+                        onTranscript?.(role, text, isFinal);
+
                         if (isFinal) {
                             setMessages(prev => [...prev, {
                                 id: uuidv4(),
-                                role: data.role || 'assistant',
-                                content: data.content || data.text,
+                                role,
+                                content: text,
                                 timestamp: new Date(),
                             }]);
                             setLiveTranscript(null);
+                            onLiveTranscript?.(null);
                         } else {
-                            setLiveTranscript({ text: data.content || data.text, role: data.role || 'assistant' });
+                            const lt = { text, role };
+                            setLiveTranscript(lt);
+                            onLiveTranscript?.(lt);
                             if (liveTranscriptTimeoutRef.current) clearTimeout(liveTranscriptTimeoutRef.current);
-                            liveTranscriptTimeoutRef.current = setTimeout(() => setLiveTranscript(null), 3000);
+                            liveTranscriptTimeoutRef.current = setTimeout(() => {
+                                setLiveTranscript(null);
+                                onLiveTranscript?.(null);
+                            }, 3000);
                         }
                     }
                 } catch (_) { /* ignore parse errors */ }
@@ -281,8 +309,9 @@ export default function PhoneCallUI({
         setMessages([]);
         setAgentState('idle');
         setLiveTranscript(null);
+        onLiveTranscript?.(null);
         setInputText('');
-    }, []);
+    }, [onLiveTranscript]);
 
     const sendMessage = React.useCallback(async () => {
         if (!inputText.trim() || !roomRef.current) return;
@@ -502,7 +531,7 @@ export default function PhoneCallUI({
                                         onChange={e => setInputText(e.target.value)}
                                         onKeyPress={handleKeyPress}
                                         placeholder="Message Emma..."
-                                        className="flex-1 min-w-0 bg-white/4 border border-white/10 rounded-2xl px-4 py-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600 font-medium transition-all"
+                                        className="flex-1 min-w-0 bg-[#0d1527] border border-white/10 rounded-2xl px-4 py-3 text-[13px] text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600 font-medium transition-all"
                                     />
                                     <button
                                         onClick={sendMessage}

@@ -1,807 +1,921 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-    CheckCircle2, Zap, Globe, Shield, BarChart3, Clock, ArrowRight, Menu, X,
-    Phone, Settings, Link as LinkIcon, Mic, ChevronDown, ChevronUp, Star,
-    Headphones, MessageCircle, Heart, Users, Sparkles, User, LogOut, Loader2
+    Zap, Sparkles, Bot, Phone, PhoneOff, ArrowRight, CheckCircle2,
+    Users, BarChart3, TrendingUp, ShieldCheck, Database, LayoutDashboard,
+    MessageSquare, Activity, Volume2, Coins, ArrowLeft, RefreshCw, Layers,
+    Clock, Plus, Check, Play, User
 } from 'lucide-react';
-import { useIntro } from '@/components/IntroContext';
-import { useAuth } from '@/components/AuthContext';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import { useIntro } from '@/components/IntroContext';
+import { useAuth } from '@/components/AuthContext';
 
-// Dynamic imports for sub-fold components
-const Background3D = dynamic(() => import('@/components/Background3D'), { ssr: false });
+// Dynamic import for PhoneCallUI
 const PhoneCallUI = dynamic(() => import('@/components/PhoneCallUI'), {
     ssr: false,
-    loading: () => <div className="h-[600px] w-full bg-slate-900/20 animate-pulse rounded-[2.5rem]" />
+    loading: () => (
+        <div className="h-[550px] w-full bg-slate-900/40 animate-pulse rounded-[2rem] flex flex-col items-center justify-center text-slate-500 gap-3 border border-white/5">
+            <Loader2 className="animate-spin text-blue-500" size={24} />
+            <span className="text-xs font-mono tracking-widest uppercase">Initializing Voice Channel...</span>
+        </div>
+    )
 });
 
-// Pricing Data
-const pricingPlans = [
-    {
-        name: "Starter",
-        price: "$0",
-        period: "/mo",
-        desc: "For individuals and small tests.",
-        features: ["50 AI calls/month", "Sales & Support Modes", "Email support", "1 Agent"],
-        cta: "Start Free",
-        highlight: false
-    },
-    {
-        name: "Pro",
-        price: "$199",
-        period: "/mo",
-        desc: "For growing support & sales teams.",
-        features: ["2,000 AI calls/month", "HubSpot & Zendesk Sync", "Priority support", "5 Agents", "Custom Voice"],
-        cta: "Get Pro",
-        highlight: true
-    },
-    {
-        name: "Enterprise",
-        price: "Custom",
-        period: "",
-        desc: "Full automation scale.",
-        features: ["Unlimited calls", "Salesforce & ServiceNow", "Dedicated Success Manager", "API Access", "SSO"],
-        cta: "Contact Sales",
-        highlight: false
-    }
-];
+// Loading helper for inlined elements
+const Loader2 = ({ className, size }: { className?: string; size?: number }) => (
+    <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        className={className}
+    >
+        <RefreshCw size={size || 16} />
+    </motion.div>
+);
 
-// FAQ Data
-const faqs = [
-    {
-        q: "Can it handle customer support?",
-        a: "Yes! You can switch the agent to 'Support Mode' where it focuses on empathy, issue resolution, and answering FAQ based on your knowledge base."
-    },
-    {
-        q: "Is the voice realistic?",
-        a: "We use the latest Llama-3 and GPT-4o voice models with ultra-low latency. It handles interruptions and pauses naturally."
-    },
-    {
-        q: "How do I see the data?",
-        a: "Sales leads go to your CRM (Salesforce/HubSpot). Support tickets are synced to your desk software (Zendesk/Intercom)."
-    },
-    {
-        q: "Can I customize the script?",
-        a: "Absolutely. Provide a system prompt, objection handling rules, and support docs in plain English."
-    }
-];
+// Define stages
+type DemoStage = 'landing' | 'onboarding' | 'orchestration' | 'dashboard';
 
-export default function LandingPage() {
-    const [activeFaq, setActiveFaq] = useState<number | null>(null);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export default function UnifiedDemoPage() {
+    const [stage, setStage] = useState<DemoStage>('landing');
     const { replayIntro } = useIntro();
-    const { user, userName, openAuthModal, logout, isLoggingOut } = useAuth();
+    const { user, userName } = useAuth();
 
-    // Lock scrolling when mobile menu is open
+    // Onboarding form state
+    const [bizName, setBizName] = useState('');
+    const [bizOffer, setBizOffer] = useState('');
+    const [bizGoal, setBizGoal] = useState('sales'); // sales, support, support_sales
+    const [onboardingStep, setOnboardingStep] = useState(0);
+
+    // Simulated chat log for conversational onboarding
+    const [chatMessages, setChatMessages] = useState<{ id: string; role: 'emma' | 'user'; text: string; options?: string[] }[]>([]);
+    const [chatInput, setChatInput] = useState('');
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    // Synthesis orchestration log state
+    const [synthesisLogs, setSynthesisLogs] = useState<{ id: number; text: string; status: 'idle' | 'pending' | 'success' }[]>([
+        { id: 1, text: 'Mapping Ideal Customer Profile (ICP)...', status: 'idle' },
+        { id: 2, text: 'Crawling local business directories...', status: 'idle' },
+        { id: 3, text: 'Synthesizing voice prompt & context registers...', status: 'idle' },
+        { id: 4, text: 'Allocating browser WebRTC port mapping...', status: 'idle' },
+        { id: 5, text: 'Spinning up live pipeline dashboard...', status: 'idle' },
+    ]);
+    const [synthesisProgress, setSynthesisProgress] = useState(0);
+
+    // Dashboard dynamic metrics
+    const [projectedRevenue, setProjectedRevenue] = useState('₦3,200,000');
+    const [leads, setLeads] = useState<any[]>([]);
+    const [activeCallStatus, setActiveCallStatus] = useState<'idle' | 'ringing' | 'connected' | 'ended'>('idle');
+    const [activeAgentState, setActiveAgentState] = useState<'idle' | 'listening' | 'thinking' | 'speaking'>('idle');
+
+    // Real-time voice sync fields
+    const [extractedData, setExtractedData] = useState({
+        budget: 'Listening...',
+        painPoint: 'Listening...',
+        timeline: 'Listening...',
+        nextAction: 'Listening...',
+        sentiment: 'Neutral'
+    });
+    const [liveCallTranscript, setLiveCallTranscript] = useState<{ text: string; role: 'user' | 'assistant' } | null>(null);
+    const [dashboardTranscripts, setDashboardTranscripts] = useState<{ id: string; role: 'user' | 'assistant'; text: string }[]>([]);
+
+    // Phone iframe identifier to force restart if needed
+    const [phoneKey, setPhoneKey] = useState(0);
+
+    // Scroll chat onboarding to bottom
     useEffect(() => {
-        if (mobileMenuOpen) {
-            document.documentElement.style.overflow = 'hidden';
-            document.body.style.overflow = 'hidden';
-            document.body.style.touchAction = 'none';
-        } else {
-            document.documentElement.style.overflow = 'unset';
-            document.body.style.overflow = 'unset';
-            document.body.style.touchAction = 'unset';
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [chatMessages]);
+
+    // Persistence hook: Load state on mount
+    useEffect(() => {
+        const savedStage = localStorage.getItem('demo_stage');
+        if (savedStage === 'dashboard') {
+            const savedName = localStorage.getItem('demo_bizName') || '';
+            const savedOffer = localStorage.getItem('demo_bizOffer') || '';
+            const savedGoal = localStorage.getItem('demo_bizGoal') || 'sales';
+            const savedRevenue = localStorage.getItem('demo_projectedRevenue') || '₦3,200,000';
+            const savedLeadsStr = localStorage.getItem('demo_leads');
+
+            setBizName(savedName);
+            setBizOffer(savedOffer);
+            setBizGoal(savedGoal);
+            setProjectedRevenue(savedRevenue);
+            if (savedLeadsStr) {
+                try {
+                    setLeads(JSON.parse(savedLeadsStr));
+                } catch (_) {}
+            }
+            setStage('dashboard');
         }
-        return () => {
-            document.documentElement.style.overflow = 'unset';
-            document.body.style.overflow = 'unset';
-            document.body.style.touchAction = 'unset';
-        };
-    }, [mobileMenuOpen]);
+    }, []);
 
-    // 3D Tilt Logic
-    const heroRef = useRef<HTMLDivElement>(null);
-    const mouseX = useMotionValue(0.5);
-    const mouseY = useMotionValue(0.5);
+    // Persistence hook: Save dashboard state changes
+    useEffect(() => {
+        if (stage === 'dashboard') {
+            localStorage.setItem('demo_stage', 'dashboard');
+            localStorage.setItem('demo_bizName', bizName);
+            localStorage.setItem('demo_bizOffer', bizOffer);
+            localStorage.setItem('demo_bizGoal', bizGoal);
+            localStorage.setItem('demo_leads', JSON.stringify(leads));
+            localStorage.setItem('demo_projectedRevenue', projectedRevenue);
+        }
+    }, [stage, bizName, bizOffer, bizGoal, leads, projectedRevenue]);
 
-    // Smoother spring physics for tilt
-    const rotateX = useSpring(useTransform(mouseY, [0, 1], [12, -12]), { stiffness: 100, damping: 20 });
-    const rotateY = useSpring(useTransform(mouseX, [0, 1], [-12, 12]), { stiffness: 100, damping: 20 });
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!heroRef.current) return;
-        const rect = heroRef.current.getBoundingClientRect();
-        const width = rect.width;
-        const height = rect.height;
-        const mouseXRelative = (e.clientX - rect.left) / width;
-        const mouseYRelative = (e.clientY - rect.top) / height;
-
-        mouseX.set(mouseXRelative);
-        mouseY.set(mouseYRelative);
+    // Handle stage transitions
+    const startOnboarding = () => {
+        setStage('onboarding');
+        setOnboardingStep(0);
+        setChatMessages([
+            {
+                id: '1',
+                role: 'emma',
+                text: "Habari! I am Emma, your AI Growth Employee. Let's customize your target outbound system in 60 seconds. To start, what is the name of your business?"
+            }
+        ]);
     };
 
-    const handleMouseLeave = () => {
-        mouseX.set(0.5);
-        mouseY.set(0.5);
-    }
+    // Chat onboarding sequence
+    const handleSendOnboardingMessage = (text: string) => {
+        if (!text.trim()) return;
+        
+        // Add user response
+        const newMsgId = Math.random().toString();
+        setChatMessages(prev => [...prev, { id: newMsgId, role: 'user', text }]);
+        setChatInput('');
+
+        if (onboardingStep === 0) {
+            setBizName(text);
+            setOnboardingStep(1);
+            setTimeout(() => {
+                setChatMessages(prev => [...prev, {
+                    id: Math.random().toString(),
+                    role: 'emma',
+                    text: `Excellent! "${text}" sounds fantastic. Now, what services or products do you offer? Be brief (e.g. wholesale cosmetics in Nairobi, solar installations in Lagos, premium pastries).`
+                }]);
+            }, 800);
+        } else if (onboardingStep === 1) {
+            setBizOffer(text);
+            setOnboardingStep(2);
+            setTimeout(() => {
+                setChatMessages(prev => [...prev, {
+                    id: Math.random().toString(),
+                    role: 'emma',
+                    text: `Got it: "${text}". What is the primary role you'd like your AI Employee to execute first?`,
+                    options: [
+                        'Qualify catering contracts / bulk deals',
+                        'Inbound customer support & issue triage',
+                        'Cold customer re-engagement outreach'
+                    ]
+                }]);
+            }, 800);
+        }
+    };
+
+    const handleSelectOption = (option: string) => {
+        // Add user selection
+        setChatMessages(prev => [...prev, { id: Math.random().toString(), role: 'user', text: option }]);
+        
+        let goal = 'sales';
+        if (option.toLowerCase().includes('support')) {
+            goal = 'support';
+        }
+        setBizGoal(goal);
+        setOnboardingStep(3);
+
+        setTimeout(() => {
+            setChatMessages(prev => [...prev, {
+                id: Math.random().toString(),
+                role: 'emma',
+                text: `Perfect. I've engineered your outreach model. Click below to synthesize your autonomous agent and spin up your pipeline dashboard. Let's start the harvest!`
+            }]);
+        }, 800);
+    };
+
+    // Magical synthesis progress trigger
+    const startSynthesis = () => {
+        setStage('orchestration');
+        setSynthesisProgress(0);
+
+        let step = 0;
+        const interval = setInterval(() => {
+            setSynthesisLogs(prev => {
+                const copy = [...prev];
+                if (step > 0 && step <= copy.length) {
+                    copy[step - 1].status = 'success';
+                }
+                if (step < copy.length) {
+                    copy[step].status = 'pending';
+                }
+                return copy;
+            });
+
+            step++;
+            setSynthesisProgress(prev => Math.min(prev + 20, 100));
+
+            if (step > 5) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    // Populate dynamically generated leads and metrics
+                    const currencySymbol = '₦';
+                    const amountVal = bizGoal === 'support' ? '₦0 (CSAT Focus)' : '₦4,800,000';
+                    setProjectedRevenue(amountVal);
+
+                    // Generate localized African leads matching business
+                    const generatedLeads = [
+                        {
+                            name: 'Adebayo Johnson',
+                            role: 'Procurement, Bello Outlets',
+                            score: 'Hot',
+                            reason: `Active buyer of ${bizOffer || 'wholesale stock'}, looking for weekly contracts.`,
+                            status: 'Ready to call'
+                        },
+                        {
+                            name: 'Ngozi Obi',
+                            role: 'CEO, Lagos Retail Co.',
+                            score: 'Hot',
+                            reason: `Requires high-volume ${bizOffer || 'services'} immediately.`,
+                            status: 'Ready to call'
+                        },
+                        {
+                            name: 'Chidi Okafor',
+                            role: 'Director, Westside Hub',
+                            score: 'Warm',
+                            reason: `Expanding branches in Abuja, interested in bulk quote.`,
+                            status: 'Ready to call'
+                        },
+                        {
+                            name: 'Fatima Musa',
+                            role: 'Operations, Northern Stores',
+                            score: 'Hot',
+                            reason: `Frustrated with current providers, wants reliable rider supply.`,
+                            status: 'Ready to call'
+                        },
+                        {
+                            name: 'Tunde Balogun',
+                            role: 'Manager, Alaba Distro',
+                            score: 'Warm',
+                            reason: `Inquires about wholesale credit terms for ${bizOffer || 'products'}.`,
+                            status: 'Ready to call'
+                        }
+                    ];
+                    setLeads(generatedLeads);
+
+                    // Transition to dashboard
+                    setStage('dashboard');
+                }, 1000);
+            }
+        }, 1200);
+    };
+
+    // Live WebRTC call listeners and handlers
+    const handleTranscriptUpdate = (role: 'user' | 'assistant', text: string, isFinal: boolean) => {
+        if (!text) return;
+        const normalized = text.toLowerCase();
+
+        if (isFinal) {
+            setDashboardTranscripts(prev => [
+                ...prev,
+                { id: Math.random().toString(), role, text }
+            ]);
+
+            // Real-time client-side keyword extraction
+            // Budget
+            if (normalized.includes('naira') || normalized.includes('₦') || normalized.includes('budget') || normalized.includes('price') || normalized.includes('cost') || normalized.includes('pay') || normalized.includes('thousand') || normalized.includes('million') || normalized.includes('rate')) {
+                setExtractedData(prev => ({
+                    ...prev,
+                    budget: 'Active Discussion (₦ / budget mentioned)'
+                }));
+            }
+            // Pain points
+            if (normalized.includes('rider') || normalized.includes('delivery') || normalized.includes('delay') || normalized.includes('late') || normalized.includes('broken') || normalized.includes('reliable') || normalized.includes('quality') || normalized.includes('wholesale') || normalized.includes('bulk')) {
+                setExtractedData(prev => ({
+                    ...prev,
+                    painPoint: 'Wholesale scale / Delivery reliability'
+                }));
+            }
+            // Timeline
+            if (normalized.includes('tomorrow') || normalized.includes('next week') || normalized.includes('monday') || normalized.includes('schedule') || normalized.includes('calendar') || normalized.includes('time') || normalized.includes('date') || normalized.includes('zoom') || normalized.includes('meet') || normalized.includes('appointment')) {
+                setExtractedData(prev => ({
+                    ...prev,
+                    timeline: 'Callback scheduled (Meeting request detected)'
+                }));
+            }
+            // Next Action
+            if (normalized.includes('email') || normalized.includes('invoice') || normalized.includes('proposal') || normalized.includes('send') || normalized.includes('number') || normalized.includes('whatsapp')) {
+                setExtractedData(prev => ({
+                    ...prev,
+                    nextAction: 'Send wholesale proposal via email'
+                }));
+            }
+            // Sentiment
+            if (normalized.includes('yes') || normalized.includes('great') || normalized.includes('perfect') || normalized.includes('good') || normalized.includes('happy') || normalized.includes('interested')) {
+                setExtractedData(prev => ({
+                    ...prev,
+                    sentiment: 'Interested (High)'
+                }));
+            } else if (normalized.includes('no') || normalized.includes('expensive') || normalized.includes('busy') || normalized.includes('later')) {
+                setExtractedData(prev => ({
+                    ...prev,
+                    sentiment: 'Objecting (Medium)'
+                }));
+            }
+        }
+    };
+
+    const handleCallStateUpdate = (callState: 'idle' | 'ringing' | 'connected' | 'ended') => {
+        setActiveCallStatus(callState);
+        
+        // Dynamically shift lead statuses inside table depending on call progress
+        if (callState === 'connected') {
+            setLeads(prev => prev.map((l, i) => i === 0 ? { ...l, status: 'Connected' } : l));
+        } else if (callState === 'ended') {
+            setLeads(prev => prev.map((l, i) => i === 0 ? { ...l, status: 'Qualified / Meeting Scheduled' } : l));
+        } else if (callState === 'ringing') {
+            setLeads(prev => prev.map((l, i) => i === 0 ? { ...l, status: 'Calling...' } : l));
+        }
+    };
+
+    const handleAgentStateUpdate = (agentState: 'idle' | 'listening' | 'thinking' | 'speaking') => {
+        setActiveAgentState(agentState);
+    };
+
+    const handleLiveTranscriptUpdate = (lt: { text: string; role: 'user' | 'assistant' } | null) => {
+        setLiveCallTranscript(lt);
+    };
+
+    const handleResetDashboard = () => {
+        // Clear persistence
+        localStorage.removeItem('demo_stage');
+        localStorage.removeItem('demo_bizName');
+        localStorage.removeItem('demo_bizOffer');
+        localStorage.removeItem('demo_bizGoal');
+        localStorage.removeItem('demo_leads');
+        localStorage.removeItem('demo_projectedRevenue');
+
+        setStage('landing');
+        setBizName('');
+        setBizOffer('');
+        setBizGoal('sales');
+        setOnboardingStep(0);
+        setChatMessages([]);
+        setPhoneKey(prev => prev + 1);
+        setExtractedData({
+            budget: 'Listening...',
+            painPoint: 'Listening...',
+            timeline: 'Listening...',
+            nextAction: 'Listening...',
+            sentiment: 'Neutral'
+        });
+        setDashboardTranscripts([]);
+        setLiveCallTranscript(null);
+    };
+
+    // System Prompt override injected to make the agent pitch Nairobi/Lagos specific context
+    const generatedSystemPrompt = `You are Emma, the Growth Operations officer for "${bizName || "our business"}". We offer ${bizOffer || "products and services"} in Africa. We are calling Adebayo Johnson from Bello Outlets to handle our primary objective: ${bizGoal === 'support' ? 'resolving customer issues and support' : 'wholesale contract and sales lead qualification'}. Talk in a professional, warm voice. Ask one question at a time. Keep your replies concise (under 2 sentences) to reduce network latency. Offer to schedule a meeting.`;
 
     return (
-        <div className="min-h-screen bg-[#020617] text-white selection:bg-blue-500/30 font-sans overflow-x-hidden">
-            {/* Intro is now handled globally in ClientLayout */}
-
-            {/* Ambient Backgrounds */}
-            <div className="fixed inset-0 animate-aurora pointer-events-none z-0" />
+        <div className="min-h-screen bg-[#020512] text-white selection:bg-blue-500/30 font-sans overflow-x-hidden relative flex flex-col justify-between">
+            {/* Ambient Background Starfield & Nebula Glows */}
             <div className="fixed inset-0 stars pointer-events-none z-0" />
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-blue-900/10 via-transparent to-transparent opacity-65" />
+                <div className="absolute top-[20%] left-[10%] w-[500px] h-[500px] bg-indigo-600/10 blur-[130px] rounded-full mix-blend-screen" />
+                <div className="absolute bottom-[20%] right-[10%] w-[450px] h-[450px] bg-blue-600/10 blur-[120px] rounded-full mix-blend-screen animate-pulse" />
+            </div>
 
-            {/* Navbar */}
-            <nav className="fixed w-full z-50 transition-all duration-300 top-0 pt-4 px-4">
-                <div className="max-w-7xl mx-auto glass-premium rounded-[2.5rem] h-24 sm:h-28 flex items-center justify-between px-10">
-                    <div className="flex items-center">
-                        <Link href="/" className="flex items-center">
-                            <div className="w-64 h-16 sm:w-80 sm:h-20 md:w-[400px] md:h-24 relative transition-transform hover:scale-105 duration-300">
-                                <Image
-                                    src="/convergsai logo nb.png"
-                                    alt="ConvergsAI Logo"
-                                    fill
-                                    sizes="(max-width: 640px) 320px, (max-width: 1024px) 400px, 500px"
-                                    priority
-                                    className="object-contain object-left"
-                                />
-                            </div>
-                        </Link>
+            {/* Premium Control Center Navbar */}
+            <nav className="relative w-full z-50 pt-6 px-6 shrink-0">
+                <div className="max-w-7xl mx-auto glass-premium rounded-[2rem] h-20 flex items-center justify-between px-8 border border-white/5">
+                    <div className="flex items-center gap-3">
+                        <div className="relative w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
+                            C
+                            <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border border-slate-900 animate-pulse" />
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-black uppercase tracking-[0.15em]">ConvergsAI</span>
+                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Control Hub</span>
+                        </div>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-                        <Link href="/playground" className="hover:text-blue-400 text-blue-300 transition-colors flex items-center gap-1">
-                            <Zap size={14} /> Playground
-                        </Link>
-                        <a href="#features" className="hover:text-white transition-colors">Features</a>
-                        <a href="#how-it-works" className="hover:text-white transition-colors">How it Works</a>
-                        <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-
-                        {user ? (
-                            <div className="flex items-center gap-4">
-                                <motion.div
-                                    className="flex items-center gap-3 bg-white/5 border border-white/10 py-1.5 px-4 rounded-full hover:bg-white/10 transition-colors cursor-default"
-                                    animate={isLoggingOut ? { scale: 0.9, opacity: 0.5 } : { scale: 1, opacity: 1 }}
-                                >
-                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold shadow-lg">
-                                        {userName?.[0] || <User size={14} />}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] text-slate-500 font-bold uppercase leading-none mb-0.5">Member</span>
-                                        <span className="text-xs font-bold text-white max-w-[100px] truncate leading-none">{userName}</span>
-                                    </div>
-                                </motion.div>
-                                <button
-                                    onClick={() => logout()}
-                                    disabled={isLoggingOut}
-                                    className={`p-2.5 rounded-full bg-white/5 border border-white/10 text-slate-400 hover:text-red-400 hover:bg-red-400/10 hover:border-red-400/20 transition-all group relative ${isLoggingOut ? 'cursor-not-allowed opacity-50' : ''}`}
-                                    aria-label="Log Out"
-                                >
-                                    {isLoggingOut ? <Loader2 className="animate-spin" size={18} /> : <LogOut size={18} />}
-                                    <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                        Log Out
-                                    </span>
-                                </button>
+                    <div className="flex items-center gap-4 text-xs font-bold text-slate-400">
+                        {stage === 'dashboard' && (
+                            <div className="hidden md:flex items-center gap-2 bg-white/5 border border-white/5 py-1.5 px-3 rounded-full text-slate-300">
+                                <Activity size={12} className="text-green-400 animate-pulse" />
+                                <span className="font-mono text-[10px] uppercase text-green-400 font-bold">Autopilot Online</span>
                             </div>
-                        ) : (
-                            <>
-                                <button
-                                    onClick={() => openAuthModal()}
-                                    className="text-white hover:text-blue-400 transition-colors font-medium"
-                                >
-                                    Log In
-                                </button>
-                                <button
-                                    onClick={() => openAuthModal()}
-                                    className="bg-white text-black hover:bg-slate-200 py-2.5 px-6 rounded-full font-bold transition-all transform hover:scale-105 shadow-xl"
-                                    aria-label="Get started with ConvergsAI"
-                                >
-                                    Get Started
-                                </button>
-                            </>
                         )}
-                    </div>
-
-                    <div className="md:hidden">
-                        <button
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="p-2 text-slate-300 hover:text-white transition-colors relative z-[70]"
-                            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-                            aria-expanded={mobileMenuOpen}
-                        >
-                            {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-                        </button>
+                        <span className="hidden sm:inline bg-white/5 px-3 py-1.5 rounded-full border border-white/5 uppercase tracking-wider text-[10px]">
+                            {userName ? `Welcome, ${userName}` : 'Demo Sandbox'}
+                        </span>
                     </div>
                 </div>
+            </nav>
 
-                {/* Mobile Menu Overlay */}
-                <AnimatePresence>
-                    {mobileMenuOpen && (
+            {/* STAGE CONTAINER */}
+            <main className={`flex-1 w-full max-w-7xl mx-auto px-6 relative z-10 flex items-center justify-center transition-all duration-300 ${
+                (stage === 'onboarding' || stage === 'orchestration') ? 'py-4 min-h-[calc(100vh-140px)]' : 'py-8 min-h-[calc(100vh-180px)]'
+            }`}>
+                <AnimatePresence mode="wait">
+
+                    {/* ──── STAGE 1: LANDING PAGE ──── */}
+                    {stage === 'landing' && (
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:hidden"
+                            key="landing"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -15 }}
+                            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                            className="w-full max-w-4xl text-center space-y-10 flex flex-col items-center"
                         >
-                            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-2xl" onClick={() => setMobileMenuOpen(false)} />
-                            <div className="glass-premium w-full rounded-[2.5rem] p-8 flex flex-col gap-6 text-center relative z-10 border-white/20">
-                                <div className="flex justify-center mb-4">
-                                    <div className="w-64 h-16 sm:w-72 sm:h-18 relative">
-                                        <Image
-                                            src="/convergsai logo nb.png"
-                                            alt="ConvergsAI Logo"
-                                            fill
-                                            sizes="288px"
-                                            className="object-contain"
-                                        />
-                                    </div>
-                                </div>
-                                <Link href="/playground" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold text-blue-300 flex items-center justify-center gap-2">
-                                    <Zap /> Playground
-                                </Link>
-                                <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold hover:text-blue-400 transition-colors">Features</a>
-                                <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold hover:text-blue-400 transition-colors">How it Works</a>
-                                <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold hover:text-blue-400 transition-colors">Pricing</a>
-                                <div className="h-px bg-white/10 my-2" />
-                                {user ? (
-                                    <div className="flex flex-col gap-6 items-center">
-                                        <div className="flex items-center gap-4 bg-white/5 p-4 rounded-3xl w-full justify-center border border-white/10">
-                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-xl shadow-lg shadow-blue-500/20">
-                                                {userName?.[0]}
-                                            </div>
-                                            <div className="text-left">
-                                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Member</div>
-                                                <div className="text-xl font-bold text-white">{userName}</div>
-                                            </div>
+                            {/* Glowing Product Tag */}
+                            <div className="inline-flex items-center gap-2.5 px-4.5 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-300 text-[10px] font-black tracking-widest uppercase shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                                <Sparkles size={11} className="text-blue-400 animate-spin" style={{ animationDuration: '6s' }} />
+                                Interactive Sandbox Demonstration
+                            </div>
+
+                            {/* Headline */}
+                            <div className="space-y-6">
+                                <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] max-w-3xl mx-auto">
+                                    <span className="block text-slate-100">Hire Your Autonomous</span>
+                                    <span className="block bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-indigo-600 drop-shadow-sm pb-1">
+                                        AI Growth Employee
+                                    </span>
+                                </h1>
+                                <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-medium leading-relaxed">
+                                    Emma handles bulk sales qualification, calls target prospects, and automates customer support in real-time. Experience the control room dashboard below.
+                                </p>
+                            </div>
+
+                            {/* Main CTA */}
+                            <div className="pt-4 flex flex-col items-center gap-4">
+                                <motion.button
+                                    whileHover={{ scale: 1.05, boxShadow: '0 0 50px rgba(99,102,241,0.5)' }}
+                                    whileTap={{ scale: 0.98 }}
+                                    onClick={startOnboarding}
+                                    className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white text-xl font-extrabold py-5 px-16 rounded-full shadow-[0_0_35px_rgba(79,70,229,0.35)] group flex items-center gap-3 transition-all duration-300 border border-white/10"
+                                >
+                                    Activate AI Growth Employee
+                                    <ArrowRight size={22} className="group-hover:translate-x-1.5 transition-transform" />
+                                </motion.button>
+                                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                                    Instant WebRTC Connection • No Registration Required
+                                </span>
+                            </div>
+
+                            {/* Core Micro-Features Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full pt-16 border-t border-white/5">
+                                {[
+                                    { title: 'Interactive Onboarding', icon: <MessageSquare className="text-blue-400" size={20} />, desc: 'Configure customized scripts and target ICP objectives via conversational chat.' },
+                                    { title: 'Magical Asset Orchestration', icon: <Layers className="text-indigo-400" size={20} />, desc: 'Watch client pipelines crawl directories, map ICPs, and launch endpoints.' },
+                                    { title: 'Real-Time Voice Sync Control', icon: <Activity className="text-emerald-400" size={20} />, desc: 'Connect direct to LiveKit WebRTC and view pipeline metrics extraction live.' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="glass-premium p-6 rounded-[2rem] border border-white/5 text-left space-y-4 hover:border-white/10 transition-colors">
+                                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                                            {item.icon}
                                         </div>
-                                        <button
-                                            onClick={() => { logout(); setMobileMenuOpen(false); }}
-                                            disabled={isLoggingOut}
-                                            className="w-full py-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold flex items-center justify-center gap-3 transition-all active:scale-95"
-                                        >
-                                            {isLoggingOut ? <Loader2 className="animate-spin" size={20} /> : <LogOut size={20} />}
-                                            {isLoggingOut ? 'Logging out...' : 'Log Out Account'}
-                                        </button>
+                                        <h3 className="font-bold text-sm text-slate-200">{item.title}</h3>
+                                        <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
                                     </div>
-                                ) : (
-                                    <>
-                                        <button onClick={() => { openAuthModal(); setMobileMenuOpen(false); }} className="text-xl font-bold hover:text-blue-400 transition-colors">Log In</button>
-                                        <button onClick={() => { openAuthModal(); setMobileMenuOpen(false); }} className="bg-white text-black py-4 rounded-full text-xl font-bold shadow-xl active:scale-95 transition-transform">Get Started</button>
-                                    </>
-                                )}
+                                ))}
                             </div>
                         </motion.div>
                     )}
-                </AnimatePresence>
-            </nav>
 
-            {/* Hero Section */}
-            <section
-                ref={heroRef}
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-                className="relative pt-40 pb-20 lg:pt-56 lg:pb-40 overflow-visible px-4 sm:px-6 perspective-1000"
-            >
-                {/* Optimized Background Loading */}
-                <div className="absolute inset-0 z-0">
-                    <div className="hidden md:block h-full w-full">
-                        <Background3D />
-                    </div>
-                    {/* Mobile Fallback: High-performance CSS gradient + grain instead of canvas */}
-                    <div className="md:hidden absolute inset-0 bg-[#020617] bg-[radial-gradient(circle_at_50%_40%,rgba(29,78,216,0.15)_0%,transparent_70%)] opacity-50" />
-                </div>
-
-                {/* Spotlights - Defer on mobile */}
-                <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none -z-10 mix-blend-screen animate-pulse hidden md:block" />
-                <div className="absolute top-[20%] right-[20%] w-[400px] h-[400px] bg-purple-600/20 blur-[100px] rounded-full pointer-events-none -z-10 mix-blend-screen delay-1000 animate-pulse hidden md:block" />
-
-                <div className="max-w-6xl mx-auto text-center relative z-10">
-
-                    {/* Hero Text Content */}
-                    <div className="space-y-8 flex flex-col items-center">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/5 bg-white/5 text-blue-300 text-[10px] font-bold tracking-widest backdrop-blur-md hover:bg-white/10 transition-colors cursor-default uppercase">
-                            <span className="relative flex h-1.5 w-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
-                            </span>
-                            New: Multi-Mode Voice Engine
-                        </div>
-
-                        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold leading-[1.1] tracking-[-0.03em] max-w-4xl mx-auto">
-                            <span className="hero-title-primary block">AI Voice Agent for Sales & Support</span>
-                            <span className="text-gradient-brand hero-title-secondary block mt-6 text-xl sm:text-2xl lg:text-4xl font-semibold leading-snug">
-                                Automate Calls, Close Deals, and Delight Customers
-                            </span>
-                        </h1>
-
-                        <p className="text-base sm:text-lg lg:text-xl text-slate-300 leading-relaxed max-w-2xl mx-auto font-medium hero-title-secondary" style={{ animationDelay: '0.6s' }}>
-                            Real-sounding AI voice, seamless CRM integration, and intelligent routing for both revenue and support teams — all in one platform.
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full pt-4 hero-title-secondary" style={{ animationDelay: '0.8s' }}>
-                            <button
-                                onClick={() => user ? window.scrollTo({ top: 1000, behavior: 'smooth' }) : openAuthModal()}
-                                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg font-bold py-4 px-10 rounded-full shadow-[0_0_40px_-10px_rgba(79,70,229,0.5)] hover:shadow-[0_0_60px_-10px_rgba(79,70,229,0.6)] hover:scale-105 transition-all duration-300 group flex items-center gap-2"
-                            >
-                                {user ? 'View Dashboard' : 'Book a Demo'}
-                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                            </button>
-                            <button className="glass px-10 py-4 rounded-full text-lg font-medium hover:bg-white/10 transition-all border border-white/10 flex items-center gap-2 group">
-                                <span className="relative flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-                                </span>
-                                See ConvergsAI in Action <span className="text-slate-500 text-sm group-hover:text-slate-300 transition-colors">(90s)</span>
-                            </button>
-                        </div>
-
-                        <div className="pt-8 flex items-center gap-4 text-slate-500 text-sm hero-title-secondary" style={{ animationDelay: '1s' }}>
-                            <div className="flex -space-x-2">
-                                {[1, 2, 3, 4].map(i => (
-                                    <div key={i} className="w-8 h-8 rounded-full border-2 border-[#020617] bg-slate-800 flex items-center justify-center overflow-hidden">
-                                        <div className="w-full h-full bg-gradient-to-br from-slate-600 to-slate-800" />
-                                    </div>
-                                ))}
-                            </div>
-                            <span className="font-medium">Trusted by 200+ Revenue Teams</span>
-                        </div>
-                    </div>
-
-                    {/* 3D Dashboard Demo */}
-                    <motion.div
-                        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-                        initial={{ opacity: 0, y: 60, rotateX: 20 }}
-                        animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                        transition={{ duration: 1, delay: 0.2, type: "spring" }}
-                        className="relative z-10 w-full mt-12 md:mt-24 perspective-1000"
-                    >
-                        {/* 3D Floating Elements - Notifications */}
+                    {/* ──── STAGE 2: CONVERSATIONAL ONBOARDING CHAT ──── */}
+                    {stage === 'onboarding' && (
                         <motion.div
-                            className="absolute -top-12 -right-12 z-20 hidden lg:block translate-z-20 transform transition-transform hover:scale-110"
-                            animate={{ y: [0, -15, 0] }}
-                            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                            key="onboarding"
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.98 }}
+                            className="w-full max-w-2xl glass-premium rounded-[2.5rem] border border-white/5 overflow-hidden flex flex-col h-[470px] max-h-[calc(100vh-200px)] shadow-2xl"
                         >
-                            <div className="glass-premium px-5 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-xl border-green-500/20 shadow-xl shadow-green-900/10">
-                                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                                    <CheckCircle2 size={16} className="text-green-400" />
-                                </div>
-                                <div>
-                                    <div className="font-bold text-sm text-white">Lead Qualified</div>
-                                    <div className="text-xs text-green-300">Revenue potential: $50k</div>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            className="absolute -bottom-10 -left-10 z-20 hidden lg:block translate-z-20"
-                            animate={{ y: [0, 15, 0] }}
-                            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                        >
-                            <div className="glass-premium px-5 py-3 rounded-2xl flex items-center gap-3 backdrop-blur-xl border-blue-500/20 shadow-xl shadow-blue-900/10">
-                                <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                                    <Headphones size={16} className="text-blue-400" />
-                                </div>
-                                <div>
-                                    <div className="font-bold text-sm text-white">Ticket Resolved</div>
-                                    <div className="text-xs text-blue-300">Support Case #4928</div>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        <div className="max-w-5xl mx-auto relative px-0 sm:px-4 preserve-3d">
-                            {/* Inner Glow/Shadow */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-600/10 blur-[90px] rounded-full pointer-events-none" />
-
-                            {/* Dashboard Container with depth */}
-                            <div className="glass-premium rounded-[2.5rem] p-2 ring-1 ring-white/10 shadow-2xl relative bg-[#0B1120]/80 backdrop-blur-2xl translate-z-10">
-                                <div className="rounded-[2rem] overflow-hidden border border-white/5 bg-[#020617] relative h-[700px] md:h-auto">
-                                    {/* Reflection overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-20 pointer-events-none z-20" />
-                                    <PhoneCallUI />
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-            </section>
-
-            {/* Below-the-fold sections wrapped in whileInView for lazy mounting effect */}
-            <motion.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true, margin: "200px" }}
-                transition={{ duration: 0.5 }}
-            >
-                <section className="py-12 border-y border-white/5 bg-slate-950/50 backdrop-blur-sm">
-                    <div className="max-w-7xl mx-auto px-6 text-center">
-                        <p className="text-xs font-bold text-slate-500 mb-8 uppercase tracking-[0.2em]">Trusted by revenue teams at</p>
-                        <div className="relative w-full overflow-hidden mask-gradient">
-                            <div className="absolute inset-y-0 left-0 w-40 bg-gradient-to-r from-[#020617] to-transparent z-10" />
-                            <div className="absolute inset-y-0 right-0 w-40 bg-gradient-to-l from-[#020617] to-transparent z-10" />
-
-                            <div className="flex w-max gap-20 animate-marquee hover:[animation-play-state:paused] opacity-60 items-center">
-                                {[...Array(4)].map((_, groupIndex) => (
-                                    <div key={groupIndex} className="flex gap-20 shrink-0">
-                                        {['Zendesk', 'Salesforce', 'HubSpot', 'Intercom', 'Shopify', 'Freshdesk'].map((brand, i) => (
-                                            <span key={i} className="text-3xl font-bold font-serif text-transparent bg-clip-text bg-gradient-to-br from-white to-slate-500 hover:to-white transition-colors cursor-default tracking-tight">
-                                                {brand}
-                                            </span>
-                                        ))}
+                            {/* Chat Header */}
+                            <div className="shrink-0 bg-white/4 border-b border-white/5 py-5 px-8 flex items-center justify-between">
+                                <div className="flex items-center gap-3.5">
+                                    <div className="relative w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 p-0.5">
+                                        <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center">
+                                            <Bot size={20} className="text-blue-400" />
+                                        </div>
+                                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-slate-950 animate-pulse" />
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Product Tour Section - NEW */}
-                <section className="py-24 relative overflow-hidden">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="glass-premium rounded-[3rem] aspect-[4/5] sm:aspect-video w-full relative overflow-hidden group shadow-2xl shadow-blue-500/10 border border-white/10">
-                            {/* Fake UI/Video Background */}
-                            <div className="absolute inset-0 bg-slate-900 flex items-center justify-center">
-                                <div className="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2070')] bg-cover bg-center" />
-                                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
-
-                                <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="z-10 w-24 h-24 rounded-full bg-white text-black flex items-center justify-center shadow-2xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-500"
-                                    aria-label="Play product tour video"
+                                    <div className="flex flex-col text-left">
+                                        <span className="text-sm font-black text-slate-200">Emma</span>
+                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">AI Operations Officer</span>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setStage('landing')}
+                                    className="text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
                                 >
-                                    <Zap size={32} fill="currentColor" />
-                                </motion.button>
-
-                                <div className="absolute bottom-6 left-6 right-6 md:bottom-12 md:left-12 md:right-12 flex flex-col md:flex-row items-start md:items-end justify-between z-10 gap-4">
-                                    <div className="space-y-2">
-                                        <div className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider border border-blue-500/30 inline-block">
-                                            Product Deep Dive
-                                        </div>
-                                        <h2 className="text-xl md:text-2xl font-bold">Watch ConvergsAI in action (90s)</h2>
-                                    </div>
-                                    <div className="hidden md:flex gap-4">
-                                        <div className="glass px-4 py-2 rounded-xl text-xs font-bold border border-white/10">Autopilot Mode: ON</div>
-                                        <div className="glass px-4 py-2 rounded-xl text-xs font-bold border border-white/10">Accuracy: 99.8%</div>
-                                    </div>
-                                </div>
+                                    <ArrowLeft size={14} /> Back
+                                </button>
                             </div>
-                        </div>
-                    </div>
-                </section>
 
-                {/* How It Works - Connected Steps */}
-                <section id="how-it-works" className="py-32 relative">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="text-center max-w-3xl mx-auto mb-24">
-                            <h2 className="text-4xl lg:text-5xl font-bold mb-6 tracking-tight">One brain. <br /><span className="text-gradient-brand">Two modes.</span></h2>
-                            <p className="text-lg text-slate-300">Instantly switch your agent between aggressive sales hunting and empathetic customer support.</p>
-                        </div>
-
-                        <div className="relative grid md:grid-cols-3 gap-8">
-                            {/* Connecting Line */}
-                            <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-blue-500/0 via-blue-500/30 to-blue-500/0 dashed" />
-
-                            {[
-                                {
-                                    step: "01",
-                                    title: "Get Started",
-                                    desc: "Choose your path to activation:",
-                                    substates: ["Start instantly (default)", "Connect CRM (optional)"],
-                                    icon: <Sparkles className="text-blue-400" size={24} />
-                                },
-                                {
-                                    step: "02",
-                                    title: "Train Your AI",
-                                    desc: "Define your ideal customer profile, qualification rules, and support documentation. Emma learns your business nuance instantly.",
-                                    icon: <Settings className="text-indigo-400" size={24} />
-                                },
-                                {
-                                    step: "03",
-                                    title: "Start Automation",
-                                    desc: "Deploy your agent to handle inbound speed-to-lead and outbound booking while you sleep. Scale without adding headcount.",
-                                    icon: <Zap className="text-purple-400" size={24} />
-                                }
-                            ].map((step, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: i * 0.2 }}
-                                    className="relative z-10 flex flex-col items-center text-center"
-                                >
-                                    <div className="w-24 h-24 rounded-3xl glass-premium flex items-center justify-center mb-8 relative group cursor-pointer hover:scale-105 transition-transform duration-300 ring-1 ring-white/10 hover:ring-blue-500/50">
-                                        <div className="absolute inset-0 bg-blue-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        {step.icon}
-                                        <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-xs font-bold font-mono">
-                                            {step.step}
-                                        </div>
-                                    </div>
-                                    <h3 className="text-2xl font-bold mb-4 tracking-tight">{step.title}</h3>
-                                    <p className="text-slate-400 leading-relaxed max-w-xs font-medium mb-4">{step.desc}</p>
-                                    {'substates' in step && (
-                                        <ul className="space-y-2 text-left">
-                                            {(step.substates as string[]).map((s, idx) => (
-                                                <li key={idx} className="flex items-center gap-2 text-xs font-bold text-blue-400/80 uppercase tracking-widest">
-                                                    <div className="w-1 h-1 rounded-full bg-blue-500" />
-                                                    {s}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </motion.div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Features Bgrid */}
-                <section id="features" className="py-24 relative">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <h2 className="sr-only">Core Features</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 h-auto md:h-[800px]">
-
-                            {/* Support & Empathy Feature */}
-                            <motion.div
-                                whileHover={{ y: -5 }}
-                                className="md:col-span-2 md:row-span-2 glass-premium rounded-[2.5rem] p-10 flex flex-col justify-between overflow-hidden relative group"
-                            >
-                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/10 blur-[100px] rounded-full pointer-events-none transition-opacity opacity-50 group-hover:opacity-100" />
-                                <div className="relative z-10">
-                                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center mb-6">
-                                        <Heart className="text-indigo-400" />
-                                    </div>
-                                    <h3 className="text-3xl font-bold mb-4 tracking-tight">Empathy Engine™</h3>
-                                    <p className="text-slate-300 text-lg max-w-lg mb-8 font-medium">
-                                        Customer support requires patience. Our agents detect frustration and adjust tone instantly, escalating only when absolutely necessary.
-                                    </p>
-                                    <div className="w-full h-48 bg-slate-900/50 rounded-2xl border border-white/5 flex items-center justify-center relative overflow-hidden">
-                                        {/* Fake Sentiment Visualizer */}
-                                        <div className="flex flex-col gap-2 items-center">
-                                            <div className="flex items-center gap-1">
-                                                {[...Array(20)].map((_, i) => (
-                                                    <motion.div
-                                                        key={i}
-                                                        className="w-2 bg-indigo-500 rounded-full"
-                                                        animate={{ height: [15, 40 + Math.random() * 40, 15] }}
-                                                        transition={{ duration: 0.8 + Math.random() * 0.5, repeat: Infinity }}
-                                                    />
-                                                ))}
-                                            </div>
-                                            <div className="text-xs font-mono text-indigo-300">SENTIMENT: POSITIVE (98%)</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-
-                            {/* CRM Sync */}
-                            <motion.div whileHover={{ y: -5 }} className="glass-premium rounded-[2.5rem] p-8 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <BarChart3 className="w-10 h-10 text-purple-400 mb-4" />
-                                <h3 className="text-xl font-bold mb-2 tracking-tight">Never Lose a Lead</h3>
-                                <p className="text-slate-300 text-sm font-medium">Automatically push qualified leads and call transcripts directly to Salesforce, HubSpot, or Pipedrive.</p>
-                            </motion.div>
-
-                            {/* Languages */}
-                            <motion.div whileHover={{ y: -5 }} className="glass-premium rounded-[2.5rem] p-8 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <Globe className="w-10 h-10 text-green-400 mb-4" />
-                                <h3 className="text-xl font-bold mb-2 tracking-tight">Global Zero-Rep Scale</h3>
-                                <p className="text-slate-300 text-sm font-medium">Expand your outbound reach globally without hiring locally. 30+ native accents available instantly.</p>
-                            </motion.div>
-
-                        </div>
-
-                        {/* ROI Lead Magnet */}
-                        <div className="mt-24 max-w-5xl mx-auto glass-premium p-1 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-[2.5rem]">
-                            <div className="bg-slate-950 rounded-[2.4rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8 h-full">
-                                <div className="space-y-4 text-center md:text-left">
-                                    <h2 className="text-3xl font-bold tracking-tight">Calculate Your Sales ROI</h2>
-                                    <p className="text-slate-300 max-w-sm">Discover exactly how much revenue you're leaving on the table by missing speed-to-lead.</p>
-                                </div>
-                                <div className="flex flex-col gap-3 w-full md:w-auto">
-                                    <button className="md:whitespace-nowrap px-6 md:px-8 py-4 bg-white text-black font-bold rounded-2xl hover:bg-blue-600 hover:text-white transition-all transform hover:scale-105 shadow-xl text-sm md:text-base" aria-label="Get started with ConvergsAI">
-                                        Download ROI Framework (PDF)
-                                    </button>
-                                    <div className="text-center text-xs text-slate-500 font-medium italic">Join 1,200+ Sales Ops leaders</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Testimonials */}
-                <section className="py-24 relative border-t border-white/5">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <h2 className="text-3xl lg:text-5xl font-bold text-center mb-16 tracking-tight">Loved by Support & Sales VPs</h2>
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {[
-                                { name: "Sarah Jenkins", role: "VP of Sales, TechFlow", text: "We replaced our entire tier-1 SDR team with ConvergsAI. Connection rates up 40%." },
-                                { name: "David Chen", role: "Head of Support, CloudScale", text: "It resolved 60% of tickets without human intervention. Our CSAT score actually went UP." },
-                                { name: "Jessica Lee", role: "Director of Ops, ScaleUp", text: "Finally, an AI that handles both sales booking and support triage in one phone number." }
-                            ].map((t, i) => (
-                                <div key={i} className="glass-premium p-8 rounded-3xl relative hover:bg-white/5 transition-colors">
-                                    <div className="absolute -top-4 -left-4 text-6xl font-serif text-white/10">"</div>
-                                    <div className="flex gap-1 text-yellow-500 mb-6 relative z-10">
-                                        {[...Array(5)].map((_, j) => <Star key={j} size={16} fill="currentColor" />)}
-                                    </div>
-                                    <p className="text-lg text-slate-300 mb-6 leading-relaxed relative z-10 font-medium">{t.text}</p>
-                                    <div className="flex items-center gap-3 border-t border-white/5 pt-4">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-white text-sm">
-                                            {t.name[0]}
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-sm">{t.name}</div>
-                                            <div className="text-xs text-slate-500">{t.role}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Pricing */}
-                <section id="pricing" className="py-32 relative">
-                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-900/10 to-transparent pointer-events-none" />
-                    <div className="max-w-7xl mx-auto px-6 relative z-10">
-                        <div className="text-center max-w-3xl mx-auto mb-20">
-                            <h2 className="text-4xl lg:text-5xl font-bold mb-6 tracking-tight">Transparent <span className="text-gradient-brand">pricing</span></h2>
-                            <p className="text-slate-300 text-lg">One subscription for both sales and support agents.</p>
-                        </div>
-
-                        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                            {pricingPlans.map((plan, i) => (
-                                <div key={i} className={`relative p-10 rounded-[2rem] border transition-all duration-300 hover:scale-[1.02] ${plan.highlight ? 'bg-slate-900/80 border-blue-500/50 shadow-2xl shadow-blue-900/20' : 'glass-premium border-white/5'}`}>
-                                    {plan.highlight && (
-                                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg shadow-blue-500/40">
-                                            Best Value
-                                        </div>
-                                    )}
-                                    <h3 className="text-xl font-bold mb-2 tracking-tight">{plan.name}</h3>
-                                    <div className="flex items-baseline gap-1 mb-6">
-                                        <span className="text-4xl font-bold">{plan.price}</span>
-                                        <span className="text-slate-500">{plan.period}</span>
-                                    </div>
-                                    <p className="text-sm text-slate-400 mb-8 font-medium">{plan.desc}</p>
-                                    <button className={`w-full py-4 rounded-xl font-bold mb-8 transition-all ${plan.highlight ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25' : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'}`}>
-                                        {plan.cta}
-                                    </button>
-                                    <ul className="space-y-4">
-                                        {plan.features.map((f, j) => (
-                                            <li key={j} className="flex items-center gap-3 text-sm text-slate-300 font-medium">
-                                                <CheckCircle2 size={16} className={plan.highlight ? 'text-blue-400' : 'text-slate-500'} />
-                                                {f}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* FAQ */}
-                <section className="py-24">
-                    <div className="max-w-3xl mx-auto px-6">
-                        <h2 className="text-3xl font-bold text-center mb-12 tracking-tight">Frequently asked questions</h2>
-                        <div className="space-y-4">
-                            {faqs.map((faq, i) => (
-                                <div key={i} className="glass-premium rounded-2xl overflow-hidden hover:bg-white/5 transition-colors border border-white/5">
-                                    <button
-                                        onClick={() => setActiveFaq(activeFaq === i ? null : i)}
-                                        className="w-full flex items-center justify-between p-6 text-left"
-                                        aria-expanded={activeFaq === i}
-                                        aria-controls={`faq-answer-${i}`}
+                            {/* Chat Conversation Scroll Feed */}
+                            <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-slate-950/20">
+                                {chatMessages.map(msg => (
+                                    <motion.div
+                                        key={msg.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                     >
-                                        <span className="font-medium text-lg text-white">{faq.q}</span>
-                                        {activeFaq === i ? <ChevronUp size={20} className="text-blue-400" /> : <ChevronDown size={20} className="text-slate-400" />}
-                                    </button>
-                                    <AnimatePresence>
-                                        {activeFaq === i && (
-                                            <motion.div
-                                                id={`faq-answer-${i}`}
-                                                initial={{ height: 0, opacity: 0 }}
-                                                animate={{ height: 'auto', opacity: 1 }}
-                                                exit={{ height: 0, opacity: 0 }}
-                                                className="overflow-hidden"
-                                            >
-                                                <div className="p-6 pt-0 text-slate-300 leading-relaxed border-t border-white/5 mt-2 font-medium">
-                                                    {faq.a}
+                                        <div className="flex flex-col gap-2 max-w-[85%]">
+                                            <div className={`px-5 py-4.5 rounded-[1.5rem] text-sm leading-[1.5] ${
+                                                msg.role === 'user'
+                                                    ? 'bg-blue-600 text-white rounded-tr-sm'
+                                                    : 'bg-white/5 border border-white/5 text-slate-100 rounded-tl-sm backdrop-blur-sm'
+                                            }`}>
+                                                {msg.text}
+                                            </div>
+
+                                            {/* Interactive Multi-Choice Options */}
+                                            {msg.options && onboardingStep === 2 && (
+                                                <div className="flex flex-col gap-2.5 pt-2">
+                                                    {msg.options.map((opt, i) => (
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.02 }}
+                                                            whileTap={{ scale: 0.98 }}
+                                                            key={i}
+                                                            onClick={() => handleSelectOption(opt)}
+                                                            className="px-5 py-3.5 bg-slate-900 border border-white/5 rounded-xl text-left text-xs font-semibold text-blue-300 hover:text-white hover:bg-blue-600/10 hover:border-blue-500/30 transition-all shadow"
+                                                        >
+                                                            {opt}
+                                                        </motion.button>
+                                                    ))}
                                                 </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                ))}
+                                <div ref={chatEndRef} />
+                            </div>
+
+                            {/* Chat Footer Input */}
+                            {onboardingStep < 2 ? (
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        handleSendOnboardingMessage(chatInput);
+                                    }}
+                                    className="shrink-0 p-5 bg-slate-950 border-t border-white/5 flex gap-3 items-center"
+                                >
+                                    <input
+                                        type="text"
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        placeholder={onboardingStep === 0 ? "Enter business name..." : "Enter services offered..."}
+                                        className="flex-1 bg-[#0d1527] text-white border border-white/10 rounded-xl px-5 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/50 placeholder:text-slate-600 font-medium transition-all"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!chatInput.trim()}
+                                        className="bg-white text-black px-6 py-4 rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-20 flex items-center justify-center"
+                                    >
+                                        Send
+                                    </button>
+                                </form>
+                            ) : onboardingStep === 3 ? (
+                                <div className="shrink-0 p-6 bg-slate-950 border-t border-white/5 flex justify-center">
+                                    <motion.button
+                                        whileHover={{ scale: 1.04, boxShadow: '0 0 40px rgba(99,102,241,0.45)' }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={startSynthesis}
+                                        className="bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 text-white font-extrabold py-4 px-12 rounded-full text-base border border-white/10 shadow-lg flex items-center gap-2 group transition-all"
+                                    >
+                                        Synthesize AI Employee
+                                        <Sparkles size={16} className="group-hover:rotate-12 transition-transform" />
+                                    </motion.button>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
+                            ) : null}
+                        </motion.div>
+                    )}
 
-                {/* Big CTA */}
-                <section className="py-32 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-b from-blue-900/20 to-slate-950 pointer-events-none" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none" />
+                    {/* ──── STAGE 3: MAGICAL ORCHESTRATION ANIMATION ──── */}
+                    {stage === 'orchestration' && (
+                        <motion.div
+                            key="orchestration"
+                            initial={{ opacity: 0, scale: 0.96 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 1.05 }}
+                            className="w-full max-w-xl text-center space-y-6 flex flex-col items-center"
+                        >
+                            {/* Synthesis brain graphic */}
+                            <div className="relative w-28 h-28 flex items-center justify-center">
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute inset-0 border-2 border-dashed border-blue-500/20 rounded-full"
+                                />
+                                <motion.div
+                                    animate={{ rotate: -360 }}
+                                    transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+                                    className="absolute inset-3 border border-dashed border-indigo-500/15 rounded-full"
+                                />
+                                {/* Glow core */}
+                                <motion.div
+                                    animate={{ scale: [1, 1.1, 1], boxShadow: ['0 0 25px rgba(59,130,246,0.4)', '0 0 50px rgba(79,70,229,0.7)', '0 0 25px rgba(59,130,246,0.4)'] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 border border-white/25 flex items-center justify-center shadow-lg"
+                                >
+                                    <Bot size={24} className="text-white" />
+                                </motion.div>
+                            </div>
 
-                    <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
-                        <h2 className="text-5xl lg:text-7xl font-bold mb-8 tracking-tight">Scale Your <span className="text-gradient-brand">Sales Pipeline Today</span></h2>
-                        <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto font-medium">
-                            Join 200+ high-growth revenue teams using ConvergsAI to automate meetings and qualify leads 24/7.
-                        </p>
-                        <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <button className="bg-white text-black text-lg font-bold px-10 py-5 rounded-full hover:scale-105 transition-transform shadow-2xl">Start Your Risk-Free Trial</button>
-                            <button className="glass px-10 py-5 rounded-full text-lg font-medium hover:bg-white/10 transition-colors border border-white/10">Schedule an ROI Call</button>
-                        </div>
-                    </div>
-                </section>
-            </motion.div>
+                            <div className="space-y-1.5 w-full">
+                                <h2 className="text-2xl font-bold tracking-tight">Synthesizing Pipeline</h2>
+                                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black">
+                                    Crafting Agent Prompts & Context Registers
+                                </p>
+                            </div>
 
-            {/* Footer */}
-            <footer className="border-t border-white/5 bg-slate-950 py-16 relative z-10">
-                <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12 text-sm text-slate-400">
-                    <div>
-                        <div className="flex items-center mb-10">
-                            <div className="w-80 h-20 relative">
-                                <Image
-                                    src="/convergsai logo nb.png"
-                                    alt="ConvergsAI"
-                                    fill
-                                    sizes="320px"
-                                    className="object-contain object-left"
+                            {/* Staggered progress checkpoints */}
+                            <div className="w-full space-y-2 text-left max-w-md mx-auto">
+                                {synthesisLogs.map((log) => (
+                                    <div
+                                        key={log.id}
+                                        className={`py-2.5 px-4 rounded-xl border flex items-center justify-between transition-all duration-300 ${
+                                            log.status === 'success'
+                                                ? 'bg-blue-600/5 border-blue-500/20 text-slate-100'
+                                                : log.status === 'pending'
+                                                    ? 'bg-white/5 border-white/10 text-white shadow-lg shadow-blue-500/5'
+                                                    : 'bg-transparent border-transparent text-slate-600'
+                                        }`}
+                                    >
+                                        <span className="text-xs font-semibold truncate">
+                                            {log.text}
+                                        </span>
+                                        {log.status === 'success' ? (
+                                            <CheckCircle2 size={14} className="text-blue-500 shrink-0" />
+                                        ) : log.status === 'pending' ? (
+                                            <Loader2 size={12} className="text-blue-400 shrink-0" />
+                                        ) : (
+                                            <div className="w-3.5 h-3.5 rounded-full border border-slate-800 shrink-0" />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Dynamic Progress Bar */}
+                            <div className="w-full max-w-md bg-white/5 h-1.5 rounded-full overflow-hidden border border-white/5">
+                                <motion.div
+                                    animate={{ width: `${synthesisProgress}%` }}
+                                    transition={{ duration: 0.5 }}
+                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
                                 />
                             </div>
-                        </div>
-                        <p className="mb-6 leading-relaxed font-medium">Automating the future of sales conversations & support tickets with human-like AI.</p>
-                        <div className="flex gap-4">
-                            <button className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/5 flex items-center justify-center" aria-label="Visit our Twitter">
-                                <span className="sr-only">Twitter</span>
-                            </button>
-                            <button className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-white/5 flex items-center justify-center" aria-label="Visit our LinkedIn">
-                                <span className="sr-only">LinkedIn</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-white mb-6">Product</h4>
-                        <ul className="space-y-3 font-medium">
-                            <li><a href="#" className="hover:text-blue-400 transition-colors">Sales Agent</a></li>
-                            <li><a href="#" className="hover:text-blue-400 transition-colors">Support Agent</a></li>
-                            <li><a href="#" className="hover:text-blue-400 transition-colors">Pricing</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-white mb-6">Company</h4>
-                        <ul className="space-y-3 font-medium">
-                            <li><a href="#" className="hover:text-blue-400 transition-colors">About</a></li>
-                            <li><a href="#" className="hover:text-blue-400 transition-colors">Careers</a></li>
-                            <li><a href="#" className="hover:text-blue-400 transition-colors">Contact</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-white mb-6">Legal</h4>
-                        <ul className="space-y-3 font-medium">
-                            <li><a href="#" className="hover:text-blue-400 transition-colors">Privacy</a></li>
-                            <li><a href="#" className="hover:text-blue-400 transition-colors">Terms</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div className="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-600 font-medium">
-                    <div className="flex flex-col md:flex-row items-center gap-4">
-                        <span>© 2024 ConvergsAI Inc. All rights reserved.</span>
-                        <span className="hidden md:block w-1 h-1 bg-slate-700 rounded-full"></span>
-                        <span className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full border border-white/5">
-                            <span className="text-slate-500">Incubated by</span>
-                            <span className="text-slate-300 font-bold tracking-wide">DETOVA LABS</span>
-                        </span>
-                        <span className="hidden md:block w-1 h-1 bg-slate-700 rounded-full"></span>
-                        <button
-                            onClick={replayIntro}
-                            className="flex items-center gap-1.5 text-slate-500 hover:text-blue-400 transition-colors cursor-pointer group"
+                        </motion.div>
+                    )}
+
+                    {/* ──── STAGE 4: CONTROL ROOM DASHBOARD ──── */}
+                    {stage === 'dashboard' && (
+                        <motion.div
+                            key="dashboard"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch pt-2"
                         >
-                            <Sparkles size={12} className="group-hover:animate-pulse" />
-                            <span>Replay Experience</span>
-                        </button>
-                    </div>
-                    <div className="flex gap-8">
-                        <span>San Francisco • London • Tokyo</span>
+                            {/* DASHBOARD HEADER - full span */}
+                            <div className="lg:col-span-12 glass-premium p-6 rounded-[2rem] border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <LayoutDashboard size={18} className="text-blue-400" />
+                                        <h2 className="text-lg font-black text-slate-100 uppercase tracking-wide">
+                                            {bizName || "Buka Foods"} Control Room
+                                        </h2>
+                                    </div>
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        Outreach Mode: {bizGoal === 'support' ? 'Customer Support Triage' : 'Sales Contract Qualification'} • Core target: {bizOffer || 'Traditional catering'}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={handleResetDashboard}
+                                    className="shrink-0 flex items-center gap-2 text-[10px] font-bold text-slate-500 hover:text-white transition-colors bg-white/5 px-4 py-2 border border-white/5 hover:border-white/10 rounded-full uppercase tracking-wider"
+                                >
+                                    <RefreshCw size={10} /> Restart Demo
+                                </button>
+                            </div>
+
+                            {/* COLUMN 1: WebRTC Client Phone Mockup Widget (lg-span-4) */}
+                            <div className="lg:col-span-4 flex flex-col justify-start">
+                                <div className="relative w-full max-w-[370px] mx-auto min-h-[580px]">
+                                    {/* Hardward outline */}
+                                    <div
+                                        className="absolute inset-0 rounded-[3.2rem] bg-gradient-to-b from-[#2c2c30] via-[#1c1c20] to-[#111115]"
+                                        style={{ boxShadow: '0 50px 130px -20px rgba(0,0,0,0.95), 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.13), inset 0 -1px 0 rgba(0,0,0,0.5)' }}
+                                    />
+                                    {/* Frame lights */}
+                                    <div className="absolute inset-0 rounded-[3.2rem] overflow-hidden pointer-events-none">
+                                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.04] to-white/[0.09]" />
+                                        <div className="absolute top-0 inset-x-6 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                                    </div>
+
+                                    {/* Screen Bezel Bevel (8px) */}
+                                    <div
+                                        className="absolute inset-[8px] rounded-[2.6rem] bg-black overflow-hidden flex flex-col"
+                                        style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05), inset 0 2px 8px rgba(0,0,0,0.8)' }}
+                                    >
+                                        <PhoneCallUI
+                                            key={phoneKey}
+                                            initialPrompt={generatedSystemPrompt}
+                                            mode={bizGoal === 'support' ? 'support' : 'sales'}
+                                            persona="Emma"
+                                            onTranscript={handleTranscriptUpdate}
+                                            onLiveTranscript={handleLiveTranscriptUpdate}
+                                            onCallStateChange={handleCallStateUpdate}
+                                            onAgentStateChange={handleAgentStateUpdate}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* COLUMN 2: Operations Hub Pipeline Leads (lg-span-5) */}
+                            <div className="lg:col-span-5 space-y-6 flex flex-col">
+                                {/* Statistics Grid */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="glass-premium p-5 rounded-[2rem] border border-white/5 space-y-1">
+                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Projected Revenue</span>
+                                        <div className="text-xl font-black text-slate-200 tracking-tight">{projectedRevenue}</div>
+                                    </div>
+                                    <div className="glass-premium p-5 rounded-[2rem] border border-white/5 space-y-1">
+                                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Prospects Discoverd</span>
+                                        <div className="text-xl font-black text-slate-200 tracking-tight">42 Leads</div>
+                                    </div>
+                                </div>
+
+                                {/* Leads Pipeline List */}
+                                <div className="glass-premium p-5 rounded-[2rem] border border-white/5 flex-1 flex flex-col overflow-hidden">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                            <Users size={14} className="text-indigo-400" /> Targeted Outbound Pipeline
+                                        </h3>
+                                        <span className="text-[9px] bg-white/5 text-slate-500 font-bold py-0.5 px-2 rounded">
+                                            Lagos/Abuja Local Directory
+                                        </span>
+                                    </div>
+
+                                    {/* Table container */}
+                                    <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                                        {leads.map((lead, idx) => (
+                                            <div
+                                                key={idx}
+                                                className={`p-3.5 rounded-2xl border transition-all duration-300 ${
+                                                    idx === 0
+                                                        ? 'bg-blue-600/5 border-blue-500/25 ring-1 ring-blue-500/10'
+                                                        : 'bg-white/[0.02] border-white/5 hover:border-white/10'
+                                                }`}
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <div className="font-bold text-xs text-slate-200">{lead.name}</div>
+                                                        <div className="text-[10px] text-slate-500 font-medium">{lead.role}</div>
+                                                    </div>
+                                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                                                        lead.score === 'Hot' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                                                    }`}>
+                                                        {lead.score}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 font-medium mt-1 leading-relaxed">
+                                                    {lead.reason}
+                                                </p>
+                                                <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-white/5 justify-between">
+                                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Outreach status:</span>
+                                                    <span className={`text-[9px] font-bold uppercase tracking-wider ${
+                                                        lead.status.includes('Qualified')
+                                                            ? 'text-emerald-400'
+                                                            : lead.status.includes('Calling') || lead.status.includes('Connected')
+                                                                ? 'text-blue-400 animate-pulse font-black'
+                                                                : 'text-slate-500'
+                                                    }`}>
+                                                        {lead.status}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* COLUMN 3: Live Sync CRM Extractor & Wave (lg-span-3) */}
+                            <div className="lg:col-span-3 space-y-6 flex flex-col justify-between">
+                                {/* Soundwave representation */}
+                                <div className="glass-premium p-5 rounded-[2rem] border border-white/5 text-center space-y-4 flex flex-col items-center">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                        Active Channel Frequency
+                                    </span>
+
+                                    {/* Wave dots */}
+                                    <div className="flex gap-1 h-14 items-center justify-center w-full">
+                                        {activeCallStatus === 'connected' ? (
+                                            Array.from({ length: 14 }).map((_, i) => (
+                                                <motion.div
+                                                    key={i}
+                                                    animate={{
+                                                        height: activeAgentState === 'speaking'
+                                                            ? [6, Math.random() * 40 + 15, 6]
+                                                            : activeAgentState === 'listening'
+                                                                ? [6, Math.random() * 20 + 8, 6]
+                                                                : 6
+                                                    }}
+                                                    transition={{ duration: 0.45, repeat: Infinity }}
+                                                    className={`w-1 rounded-full ${
+                                                        activeAgentState === 'speaking' ? 'bg-indigo-500' : 'bg-blue-400'
+                                                    }`}
+                                                />
+                                            ))
+                                        ) : (
+                                            <div className="h-0.5 w-full bg-white/10" />
+                                        )}
+                                    </div>
+
+                                    <span className="text-[9px] font-mono text-slate-400 uppercase font-black tracking-widest">
+                                        {activeCallStatus === 'connected'
+                                            ? `WebRTC: ${activeAgentState.toUpperCase()}`
+                                            : `Line Status: ${activeCallStatus.toUpperCase()}`}
+                                    </span>
+                                </div>
+
+                                {/* Extracted Metadata */}
+                                <div className="glass-premium p-5 rounded-[2rem] border border-white/5 flex-1 flex flex-col overflow-hidden">
+                                    <div className="flex items-center gap-2 mb-4 shrink-0">
+                                        <Database size={13} className="text-emerald-400" />
+                                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">CRM Metadata Extractor</h3>
+                                    </div>
+
+                                    <div className="flex-1 space-y-3.5 overflow-y-auto pr-1 custom-scrollbar">
+                                        {[
+                                            { label: 'Budget/Pricing status', value: extractedData.budget, color: 'text-indigo-400' },
+                                            { label: 'Primary Pain Point', value: extractedData.painPoint, color: 'text-indigo-400' },
+                                            { label: 'Meeting Timeline', value: extractedData.timeline, color: 'text-indigo-400' },
+                                            { label: 'CRM Next Action', value: extractedData.nextAction, color: 'text-indigo-400' },
+                                            { label: 'Conversation Sentiment', value: extractedData.sentiment, color: extractedData.sentiment.includes('High') ? 'text-green-400 font-bold' : 'text-blue-400' },
+                                        ].map((field, idx) => (
+                                            <div key={idx} className="p-3 bg-white/[0.02] border border-white/5 rounded-xl space-y-1">
+                                                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+                                                    {field.label}
+                                                </div>
+                                                <div className={`text-xs font-semibold ${field.color}`}>
+                                                    {field.value}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Live Transcripts Bubble Log */}
+                                <div className="glass-premium p-4.5 rounded-[2rem] border border-white/5 h-[170px] overflow-hidden flex flex-col">
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 shrink-0">
+                                        Live Transcript Feed
+                                    </span>
+
+                                    <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar text-[11px] leading-[1.4]">
+                                        {liveCallTranscript && (
+                                            <div className="italic text-blue-300 font-medium">
+                                                <span className="font-bold uppercase tracking-wider text-[8px] mr-1">
+                                                    {liveCallTranscript.role === 'user' ? 'Client' : 'Emma'}:
+                                                </span>
+                                                {liveCallTranscript.text}...
+                                            </div>
+                                        )}
+
+                                        {dashboardTranscripts.slice().reverse().map((dt) => (
+                                            <div key={dt.id} className="text-slate-400 font-medium">
+                                                <span className={`font-bold uppercase tracking-wider text-[8px] mr-1 ${
+                                                    dt.role === 'user' ? 'text-blue-400' : 'text-indigo-400'
+                                                }`}>
+                                                    {dt.role === 'user' ? 'Client' : 'Emma'}:
+                                                </span>
+                                                {dt.text}
+                                            </div>
+                                        ))}
+
+                                        {dashboardTranscripts.length === 0 && !liveCallTranscript && (
+                                            <div className="text-slate-600 text-xs italic text-center pt-8">
+                                                Speak into browser microphone to sync data...
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                </AnimatePresence>
+            </main>
+
+            {/* Premium Control Center Footer */}
+            <footer className="relative z-10 py-6 text-center text-[10px] font-bold text-slate-600 uppercase tracking-widest shrink-0 border-t border-white/5 bg-[#020512]">
+                <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <span>© 2026 ConvergsAI Inc. All Rights Reserved.</span>
+                    <div className="flex gap-4">
+                        <span className="hover:text-slate-400 cursor-pointer">Security Compliance</span>
+                        <span className="hover:text-slate-400 cursor-pointer">Service Level Agreement</span>
                     </div>
                 </div>
             </footer>
